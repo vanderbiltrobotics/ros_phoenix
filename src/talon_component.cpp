@@ -1,4 +1,5 @@
 #include "ros_phoenix/talon_component.hpp"
+#include "ctre/phoenix/platform/Platform.h"
 
 #include "rcutils/logging_macros.h"
 
@@ -14,6 +15,9 @@ namespace ros_phoenix
     TalonComponent::TalonComponent(const NodeOptions &options)
         : Node("talon", options)
     {
+        this->declare_parameter<std::string>("interface", "can0");
+        ctre::phoenix::platform::can::SetCANInterface(this->get_parameter("interface").as_string().c_str());
+
         this->declare_parameter<int>("id", 0);
         this->declare_parameter<int>("period_ms", 20);
         this->declare_parameter<int>("follow", -1);
@@ -35,7 +39,7 @@ namespace ros_phoenix
             std::chrono::milliseconds(this->get_parameter("period_ms").as_int()),
             std::bind(&TalonComponent::onTimer, this));
 
-        this->add_on_set_parameters_callback(std::bind(&TalonComponent::reconfigure, this, std::placeholders::_1));
+        this->set_on_parameters_set_callback(std::bind(&TalonComponent::reconfigure, this, std::placeholders::_1));
         this->reconfigure({});
 
         std::string name(this->get_name());
@@ -51,8 +55,7 @@ namespace ros_phoenix
         std::lock_guard<std::mutex> guard(this->config_mutex_);
         if (this->config_thread_)
         {
-            this->configured_ = true;
-            guard.~lock_guard();
+            this->configured_ = true; // Signal config thread to stop
             this->config_thread_->join();
         }
     }
@@ -61,7 +64,6 @@ namespace ros_phoenix
     TalonComponent::reconfigure(const std::vector<Parameter> &params)
     {
         std::lock_guard<std::mutex> guard(this->config_mutex_);
-        this->configured_ = false;
 
         for (auto param : params)
         {
@@ -83,9 +85,15 @@ namespace ros_phoenix
         }
 
         if (!this->config_thread_)
-        { // Check if thread already exists
+        {
+            this->configured_ = false;
             this->config_thread_ = std::make_shared<std::thread>(std::bind(&TalonComponent::configure, this));
-            this->config_thread_->detach();
+        }
+        else if (this->configured_)
+        { // Thread needs to be joined and restarted
+            this->config_thread_->join();
+            this->configured_ = false;
+            this->config_thread_ = std::make_shared<std::thread>(std::bind(&TalonComponent::configure, this));
         }
 
         auto result = rcl_interfaces::msg::SetParametersResult();
@@ -98,7 +106,11 @@ namespace ros_phoenix
         bool warned = false;
         while (!this->configured_)
         {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             std::lock_guard<std::mutex> guard(this->config_mutex_);
+            if (this->configured_)
+                break; // Break out if signaled to stop while sleeping
+
             if (this->talon_->GetFirmwareVersion() == -1)
             {
                 if (!warned)
@@ -106,65 +118,55 @@ namespace ros_phoenix
                     RCLCPP_WARN(this->get_logger(), "Talon has not been seen and can not be configured!");
                     warned = true;
                 }
+                continue;
             }
+            SlotConfiguration slot;
+            slot.kP = this->get_parameter("P").as_double();
+            slot.kI = this->get_parameter("I").as_double();
+            slot.kD = this->get_parameter("D").as_double();
+            slot.kF = this->get_parameter("F").as_double();
+
+            TalonSRXConfiguration config;
+            config.slot0 = slot;
+            config.voltageCompSaturation = this->get_parameter("max_voltage").as_double();
+            config.continuousCurrentLimit = this->get_parameter("max_current").as_double();
+            config.peakCurrentLimit = this->get_parameter("max_current").as_double();
+            config.peakCurrentDuration = 100; // ms
+            config.pulseWidthPeriod_EdgesPerRot = this->get_parameter("edges_per_rot").as_int();
+
+            ErrorCode error = this->talon_->ConfigAllSettings(config, 50); // Takes up to 50ms
+            if (error != ErrorCode::OK)
+            {
+                if (!warned)
+                {
+                    RCLCPP_WARN(this->get_logger(), "Talon configuration failed!");
+                    warned = true;
+                }
+                continue;
+            }
+
+            if (this->get_parameter("brake_mode").as_bool())
+                this->talon_->SetNeutralMode(NeutralMode::Brake);
             else
-            {
-                SlotConfiguration slot;
-                slot.kP = this->get_parameter("P").as_double();
-                slot.kI = this->get_parameter("I").as_double();
-                slot.kD = this->get_parameter("D").as_double();
-                slot.kF = this->get_parameter("F").as_double();
+                this->talon_->SetNeutralMode(NeutralMode::Coast);
 
-                TalonSRXConfiguration config;
-                config.slot0 = slot;
-                config.voltageCompSaturation = this->get_parameter("max_voltage").as_double();
-                config.continuousCurrentLimit = this->get_parameter("max_current").as_double();
-                config.peakCurrentLimit = this->get_parameter("max_current").as_double();
-                config.peakCurrentDuration = 100; // ms
-                config.pulseWidthPeriod_EdgesPerRot = this->get_parameter("edges_per_rot").as_int();
+            if (this->get_parameter("analog_input").as_bool())
+                this->talon_->ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::Analog);
+            else
+                this->talon_->ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::CTRE_MagEncoder_Relative);
 
-                ErrorCode error = this->talon_->ConfigAllSettings(config);
-                if (error != ErrorCode::OK)
-                {
-                    if (!warned)
-                    {
-                        RCLCPP_WARN(this->get_logger(), "Talon configuration failed!");
-                        warned = true;
-                    }
-                }
-                else
-                {
+            this->talon_->EnableCurrentLimit(true);
+            this->talon_->EnableVoltageCompensation(true);
+            this->talon_->SetInverted(this->get_parameter("inverted").as_bool());
+            this->talon_->SetSensorPhase(this->get_parameter("invert_sensor").as_bool());
+            this->talon_->SelectProfileSlot(0, 0);
 
-                    if (this->get_parameter("brake_mode").as_bool())
-                        this->talon_->SetNeutralMode(NeutralMode::Brake);
-                    else
-                        this->talon_->SetNeutralMode(NeutralMode::Coast);
+            int follow = this->get_parameter("follow").as_int();
+            if (follow > 0)
+                this->talon_->Set(ControlMode::Follower, follow);
 
-                    if (this->get_parameter("analog_input").as_bool())
-                        this->talon_->ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::Analog);
-                    else
-                        this->talon_->ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::CTRE_MagEncoder_Relative);
-
-                    this->talon_->EnableCurrentLimit(true);
-                    this->talon_->EnableVoltageCompensation(true);
-                    this->talon_->SetInverted(this->get_parameter("inverted").as_bool());
-                    this->talon_->SetSensorPhase(this->get_parameter("invert_sensor").as_bool());
-                    this->talon_->SelectProfileSlot(0, 0);
-
-                    int follow = this->get_parameter("follow").as_int();
-                    if (follow > 0)
-                        this->talon_->Set(ControlMode::Follower, follow);
-
-                    RCLCPP_INFO(this->get_logger(), "Successfully configured Talon");
-                    this->configured_ = true;
-                    this->config_thread_.reset();
-                }
-            }
-            if (!this->configured_)
-            {
-                guard.~lock_guard(); // Release lock before sleeping
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-            }
+            RCLCPP_INFO(this->get_logger(), "Successfully configured Talon");
+            this->configured_ = true;
         }
     }
 

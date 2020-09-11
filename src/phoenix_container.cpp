@@ -18,6 +18,6 @@ int main(int argc, char **argv)
     while (rclcpp::ok())
     {
         ctre::phoenix::unmanaged::FeedEnable(100);
-        exec->spin_once();
+        exec->spin_once(std::chrono::milliseconds(50));
     }
 }

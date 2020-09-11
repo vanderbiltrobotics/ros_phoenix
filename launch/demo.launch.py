@@ -10,8 +10,8 @@ def generate_launch_description():
     container = ComposableNodeContainer(
             name='talon_container',
             namespace='',
-            package='ros_phoenix',
-            executable='phoenix_container',
+            package='rclcpp_components',
+            executable='component_container',
             composable_node_descriptions=[
                 ComposableNode(
                     package='ros_phoenix',

@@ -1,5 +1,6 @@
 #include "ros_phoenix/talon_component.hpp"
 #include "ctre/phoenix/platform/Platform.h"
+#include "ctre/phoenix/unmanaged/Unmanaged.h"
 
 #include "rcutils/logging_macros.h"
 
@@ -172,6 +173,7 @@ namespace ros_phoenix
 
     void TalonComponent::onTimer()
     {
+        ctre::phoenix::unmanaged::FeedEnable(2 * this->get_parameter("period_ms").as_int());
         if (!this->configured_)
             return;
 

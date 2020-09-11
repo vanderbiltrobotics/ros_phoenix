@@ -50,20 +50,6 @@ foreach(LIBRARY ${PHOENIX_LIBRARIES})
   )
 endforeach()
 
-# Create target for test
-add_executable(phoenix_test "src/test.cpp" "src/talon_component.cpp")
-ament_target_dependencies(phoenix_test
-  "rclcpp"
-  "rclcpp_components")
-target_link_libraries(phoenix_test ${PHOENIX_LIBRARIES} ros_phoenix__rosidl_typesupport_cpp)
-
-# Create target for phoenix_container
-add_executable(phoenix_container "src/phoenix_container.cpp")
-ament_target_dependencies(phoenix_container
-  "rclcpp"
-  "rclcpp_components")
-target_link_libraries(phoenix_container ${PHOENIX_LIBRARIES})
-
 # Create target for TalonComponent
 add_library(talon_component SHARED
    src/talon_component.cpp)
@@ -75,8 +61,15 @@ ament_target_dependencies(talon_component
 rclcpp_components_register_nodes(talon_component "ros_phoenix::TalonComponent")
 target_link_libraries(talon_component ${PHOENIX_LIBRARIES} ros_phoenix__rosidl_typesupport_cpp)
 
+# Create target for test
+add_executable(phoenix_test "src/test.cpp")
+ament_target_dependencies(phoenix_test
+  "rclcpp"
+  "rclcpp_components")
+target_link_libraries(phoenix_test ${PHOENIX_LIBRARIES} talon_component ros_phoenix__rosidl_typesupport_cpp)
+
 # Install Components
-install(TARGETS phoenix_container talon_component phoenix_test
+install(TARGETS talon_component phoenix_test
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME})

@@ -24,8 +24,8 @@ find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/TalonControl.msg"
-  "msg/TalonStatus.msg"
+  "msg/MotorControl.msg"
+  "msg/MotorStatus.msg"
 )
 
 include_directories(include ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp)
@@ -51,25 +51,29 @@ foreach(LIBRARY ${PHOENIX_LIBRARIES})
 endforeach()
 
 # Create target for TalonComponent
-add_library(talon_component SHARED
-   src/talon_component.cpp)
-ament_target_dependencies(talon_component
+add_library(phoenix_components SHARED
+   "src/victor_component.cpp"
+   "src/talon_component.cpp"
+   "src/falcon_component.cpp")
+ament_target_dependencies(phoenix_components
   "rclcpp"
   "rclcpp_components"
   "rcutils"
   "std_msgs")
-rclcpp_components_register_nodes(talon_component "ros_phoenix::TalonComponent")
-target_link_libraries(talon_component ${PHOENIX_LIBRARIES} ros_phoenix__rosidl_typesupport_cpp)
+rclcpp_components_register_nodes(phoenix_components "ros_phoenix::VictorComponent")
+rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonComponent")
+rclcpp_components_register_nodes(phoenix_components "ros_phoenix::FalconComponent")
+target_link_libraries(phoenix_components ${PHOENIX_LIBRARIES} ros_phoenix__rosidl_typesupport_cpp)
 
 # Create target for test
 add_executable(phoenix_test "src/test.cpp")
 ament_target_dependencies(phoenix_test
   "rclcpp"
   "rclcpp_components")
-target_link_libraries(phoenix_test ${PHOENIX_LIBRARIES} talon_component ros_phoenix__rosidl_typesupport_cpp)
+target_link_libraries(phoenix_test ${PHOENIX_LIBRARIES} phoenix_components ros_phoenix__rosidl_typesupport_cpp)
 
 # Install Components
-install(TARGETS talon_component phoenix_test
+install(TARGETS phoenix_components phoenix_test
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME})

@@ -1,5 +1,3 @@
-#define Phoenix_No_WPI // remove WPI dependencies
-
 #include "rclcpp/rclcpp.hpp"
 #include "ros_phoenix/talon_component.hpp"
 

@@ -31,6 +31,7 @@ namespace ros_phoenix
         this->declare_parameter<bool>("analog_input", false);
         this->declare_parameter<double>("max_voltage", 12);
         this->declare_parameter<double>("max_current", 30);
+        this->declare_parameter<double>("sensor_multiplier", 1.0);
 
         this->declare_parameter<double>("P", 0);
         this->declare_parameter<double>("I", 0);
@@ -155,6 +156,7 @@ namespace ros_phoenix
                 this->controller_->SetNeutralMode(NeutralMode::Coast);
 
             this->configure_sensor();
+            this->controller_->ConfigSelectedFeedbackCoefficient(this->get_parameter("sensor_multiplier").as_double());
 
             this->controller_->EnableVoltageCompensation(true);
             this->controller_->SetInverted(this->get_parameter("inverted").as_bool());

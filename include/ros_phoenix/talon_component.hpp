@@ -10,38 +10,40 @@
 #define Phoenix_No_WPI // remove WPI dependencies
 #include "ctre/Phoenix.h"
 
-namespace ros_phoenix {
+namespace ros_phoenix
+{
 
-class TalonComponent : public rclcpp::Node {
-public:
-    explicit TalonComponent(const rclcpp::NodeOptions& options);
+    class TalonComponent : public rclcpp::Node
+    {
+    public:
+        explicit TalonComponent(const rclcpp::NodeOptions &options);
 
-    ~TalonComponent();
+        ~TalonComponent();
 
-    void set(ros_phoenix::msg::TalonControl::UniquePtr msg);
+        void set(ros_phoenix::msg::TalonControl::UniquePtr msg);
 
-protected:
-    rcl_interfaces::msg::SetParametersResult reconfigure(const std::vector<rclcpp::Parameter>& params);
+    protected:
+        rcl_interfaces::msg::SetParametersResult reconfigure(const std::vector<rclcpp::Parameter> &params);
 
-    void configure();
+        void configure();
 
-    void onTimer();
+        void onTimer();
 
-private:
-    std::unique_ptr<TalonSRX> talon_;
+    private:
+        std::shared_ptr<TalonSRX> talon_;
 
-    rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp::TimerBase::SharedPtr timer_;
 
-    rclcpp::Publisher<ros_phoenix::msg::TalonStatus>::SharedPtr pub_;
+        rclcpp::Publisher<ros_phoenix::msg::TalonStatus>::SharedPtr pub_;
 
-    rclcpp::Subscription<ros_phoenix::msg::TalonControl>::SharedPtr sub_;
+        rclcpp::Subscription<ros_phoenix::msg::TalonControl>::SharedPtr sub_;
 
-    //rclcpp::Service<tutorial_interfaces::srv::AddThreeInts>::SharedPtr reset_service_;
+        //rclcpp::Service<tutorial_interfaces::srv::AddThreeInts>::SharedPtr reset_service_;
 
-    bool configured_ = false;
-    std::mutex config_mutex_;
-    std::shared_ptr<std::thread> config_thread_;
-};
+        bool configured_ = false;
+        std::mutex config_mutex_;
+        std::shared_ptr<std::thread> config_thread_;
+    };
 
 } // namespace ros_phoenix
 

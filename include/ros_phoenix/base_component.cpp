@@ -16,7 +16,7 @@ namespace ros_phoenix
 
     template <class MotorController, class Configuration, class FeedbackDevice, class ControlMode>
     BaseComponent<MotorController, Configuration, FeedbackDevice, ControlMode>::BaseComponent(const NodeOptions &options)
-        : Node("talon", options)
+        : Node("motor", options)
     {
         this->declare_parameter<std::string>("interface", "can0");
         ctre::phoenix::platform::can::SetCANInterface(this->get_parameter("interface").as_string().c_str());

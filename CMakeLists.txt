@@ -1,6 +1,27 @@
 cmake_minimum_required(VERSION 3.5)
 project(ros_phoenix)
 
+# Verify Phoenix git submodule
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include)
+   message(INFO "Succesfully loaded CTRE Phoenix Library")
+else()
+  message(FATAL_ERROR
+    "Failed to find CTRE Phoenix Library! "
+    "Do you need to initialize the submodule?: git submodule update --init --recursive"
+  )
+endif()
+
+# Set CTRE_ARCH
+if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf")
+  set(CTRE_ARCH "raspberry")
+elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
+  set(CTRE_ARCH "jetsontx")
+elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "x86_64-linux-gnu")
+  set(CTRE_ARCH "x86-64")
+else()
+  message(FATAL_ERROR "Unsupported architecture for CTRE Phoenix")
+endif()
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -27,7 +48,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotorStatus.msg"
 )
 
-include_directories(include ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp)
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include
+  ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp
+)
 
 # List of Phoenix static libraries
 set(PHOENIX_LIBRARIES CTRE_Phoenix
@@ -41,7 +66,7 @@ set(PHOENIX_LIBRARIES CTRE_Phoenix
 # Create a target for each Phoenix library
 foreach(LIBRARY ${PHOENIX_LIBRARIES})
   add_library(${LIBRARY} STATIC IMPORTED)
-  set(LIBRARY_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/${CMAKE_LIBRARY_ARCHITECTURE}/lib${LIBRARY}.a)
+  set(LIBRARY_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/lib/${CTRE_ARCH}/lib${LIBRARY}.a)
   SET_TARGET_PROPERTIES(${LIBRARY} PROPERTIES IMPORTED_LOCATION ${LIBRARY_LOCATION})
   install (
     FILES ${LIBRARY_LOCATION}

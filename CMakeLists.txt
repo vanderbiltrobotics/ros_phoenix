@@ -20,7 +20,6 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -58,8 +57,7 @@ add_library(phoenix_components SHARED
 ament_target_dependencies(phoenix_components
   "rclcpp"
   "rclcpp_components"
-  "rcutils"
-  "std_msgs")
+  "rcutils")
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::VictorComponent")
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonComponent")
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::FalconComponent")
@@ -68,8 +66,7 @@ target_link_libraries(phoenix_components ${PHOENIX_LIBRARIES} ros_phoenix__rosid
 # Create target for test
 add_executable(phoenix_test "src/test.cpp")
 ament_target_dependencies(phoenix_test
-  "rclcpp"
-  "rclcpp_components")
+  "rclcpp")
 target_link_libraries(phoenix_test ${PHOENIX_LIBRARIES} phoenix_components ros_phoenix__rosidl_typesupport_cpp)
 
 # Install Components

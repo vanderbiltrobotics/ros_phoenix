@@ -39,7 +39,7 @@ $ ros2 component load /PhoenixContainer ros_phoenix ros_phoenix::TalonComponent 
 ## Components
 - `ros_phoenix::VictorComponent`: Victor SRX Component
 - `ros_phoenix::TalonComponent`: Talon SRX Component
-- `ros_phoenix::FalconComponent`: Talon SR / Falcon 500 Component
+- `ros_phoenix::FalconComponent`: Talon FX / Falcon 500 Component
 
 ## Component Interface
 ### Published Topics

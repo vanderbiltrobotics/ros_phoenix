@@ -159,7 +159,7 @@ namespace ros_phoenix
             this->controller_->ConfigSelectedFeedbackCoefficient(this->get_parameter("sensor_multiplier").as_double());
 
             this->controller_->EnableVoltageCompensation(true);
-            this->controller_->SetInverted(this->get_parameter("inverted").as_bool());
+            this->controller_->SetInverted(this->get_parameter("invert").as_bool());
             this->controller_->SetSensorPhase(this->get_parameter("invert_sensor").as_bool());
             this->controller_->SelectProfileSlot(0, 0);
 

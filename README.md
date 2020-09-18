@@ -1,6 +1,5 @@
 # ros_phoenix
-## **This project is a work in progress and has not been tested with real hardware**
-This project contains a ROS2 package for interfacing with CTRE motor controllers. It provides components for controlling Victor SPXs, Talon SRXs, and Falcon 500s. It uses the SocketCAN driver for communicating with these devices over a CAN bus.
+This project contains a ROS2 package for interfacing with CTRE motor controllers. It provides components for controlling Victor SPXs, Talon SRXs, and Falcon 500s. It uses the SocketCAN driver for communicating with these devices over a CAN bus. This version takes advantage of ROS2 features such as composition and improved parameter system.
 
 ## Cloning and Building
 1. Clone the package into a ROS2 workspace
@@ -53,12 +52,13 @@ $ ros2 component load /PhoenixContainer ros_phoenix ros_phoenix::TalonComponent 
 ### Parameters
 - `id` (0): Device CAN bus ID
 - `period_ms` (20): Period in milliseconds of status updates
+- `watchdog_ms` (100): Watchdog timer. Must be greater than period_ms!
 - `follow` (-1): If greater than zero, the ID of another device to follow
 - `edges_per_rot` (4096): Encoder edges per rotation
 - `invert` (false): Invert motor output
 - `invert_sensor` (false): Invert sensor direction
 - `brake_mode` (true): Enable brake mode
-- `analog_input` (true): Use an analog input instead of an encoder
+- `analog_input` (false): Use an analog input instead of an encoder
 - `max_voltage` (12.0): Voltage which corresponds to a percent output of 1.0
 - `max_current` (30.0): Maximum current output
 - `sensor_multiplier` (1.0): Factor to convert native device units to meaningful units

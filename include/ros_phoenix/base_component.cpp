@@ -2,6 +2,7 @@
 
 #include "ctre/phoenix/platform/Platform.h"
 #include "ctre/phoenix/unmanaged/Unmanaged.h"
+#include "ctre/phoenix/cci/Unmanaged_CCI.h"
 
 #include "rclcpp/qos.hpp"
 #include "rcutils/logging_macros.h"
@@ -20,9 +21,11 @@ namespace ros_phoenix
     {
         this->declare_parameter<std::string>("interface", "can0");
         ctre::phoenix::platform::can::SetCANInterface(this->get_parameter("interface").as_string().c_str());
+        c_SetPhoenixDiagnosticsStartTime(-1); // disable diag server
 
         this->declare_parameter<int>("id", 0);
         this->declare_parameter<int>("period_ms", 20);
+        this->declare_parameter<int>("watchdog_ms", 100);
         this->declare_parameter<int>("follow", -1);
         this->declare_parameter<int>("edges_per_rot", 4096); // Encoder edges per rotation (4096 is for built-in encoder)
         this->declare_parameter<bool>("invert", false);
@@ -38,9 +41,14 @@ namespace ros_phoenix
         this->declare_parameter<double>("D", 0);
         this->declare_parameter<double>("F", 0);
 
+        this->period_ms_ = this->get_parameter("period_ms").as_int();
+        this->watchdog_ms_ = this->get_parameter("watchdog_ms").as_int();
+
         this->controller_ = std::make_shared<MotorController>(this->get_parameter("id").as_int());
+
+        this->last_update_ = this->now();
         this->timer_ = timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(this->get_parameter("period_ms").as_int()),
+            std::chrono::milliseconds(this->period_ms_),
             std::bind(&BaseComponent::onTimer, this));
 
         this->set_on_parameters_set_callback(std::bind(&BaseComponent::reconfigure, this, std::placeholders::_1));
@@ -61,6 +69,7 @@ namespace ros_phoenix
         if (this->config_thread_)
         {
             this->configured_ = true; // Signal config thread to stop
+            guard.~lock_guard();
             this->config_thread_->join();
         }
     }
@@ -84,9 +93,14 @@ namespace ros_phoenix
             }
             else if (param.get_name() == "period_ms" || !this->timer_)
             {
+                this->period_ms_ = param.as_int();
                 timer_ = this->create_wall_timer(
-                    std::chrono::milliseconds(param.as_int()),
+                    std::chrono::milliseconds(this->period_ms_),
                     std::bind(&BaseComponent::onTimer, this));
+            }
+            else if (param.get_name() == "watchdog_ms")
+            {
+                this->watchdog_ms_ = param.as_int();
             }
         }
 
@@ -191,9 +205,22 @@ namespace ros_phoenix
     template <class MotorController, class Configuration, class FeedbackDevice, class ControlMode>
     void BaseComponent<MotorController, Configuration, FeedbackDevice, ControlMode>::onTimer()
     {
-        ctre::phoenix::unmanaged::FeedEnable(2 * this->get_parameter("period_ms").as_int());
+        ctre::phoenix::unmanaged::FeedEnable(this->watchdog_ms_);
         if (!this->configured_)
             return;
+
+        auto now = this->now();
+        if (now - this->last_update_ > rclcpp::Duration(0, this->watchdog_ms_ * 1000))
+        {
+            this->controller_->Set(ControlMode::PercentOutput, 0.0);
+            if (!this->watchdog_warned_)
+            {
+                RCLCPP_WARN(this->get_logger(), "Watchdog timer expired: Motor ouput disabled");
+                this->watchdog_warned_ = true;
+            }
+        }
+        this->last_update_ = now;
+        this->watchdog_warned_ = false;
 
         ros_phoenix::msg::MotorStatus status;
 

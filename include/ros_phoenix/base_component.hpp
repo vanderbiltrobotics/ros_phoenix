@@ -36,8 +36,13 @@ namespace ros_phoenix
         void onTimer();
 
     private:
+        int period_ms_;
+        int watchdog_ms_;
+        bool watchdog_warned_ = false;
+
         std::shared_ptr<MotorController> controller_;
 
+        rclcpp::Time last_update_;
         rclcpp::TimerBase::SharedPtr timer_;
 
         rclcpp::Publisher<ros_phoenix::msg::MotorStatus>::SharedPtr pub_;

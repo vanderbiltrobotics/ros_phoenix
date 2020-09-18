@@ -15,7 +15,7 @@ $ git submodule update --init --recursive
 3. Build the workspace and source the setup file
 ```
 $ cd <ros_ws>
-$ colcon build
+$ colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 $ source install/setup.bash
 ```
 
@@ -27,7 +27,7 @@ This package uses ROS2 components to compose nodes into a single process. See th
 
 1. Start a component container and rename it PhoenixContainer (or any other name)
 ```
-$ ros2 run rclcpp_components component_container --ros-args -r __node:=PhoenixContainer
+$ ros2 run ros_phoenix phoenix_container --ros-args -r __node:=PhoenixContainer
 ```
 2. Load a ros_phoenix component into the container with the device id number
 ```

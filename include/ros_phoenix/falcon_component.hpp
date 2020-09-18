@@ -5,7 +5,7 @@
 
 namespace ros_phoenix
 {
-    typedef BaseComponent<TalonFX, TalonFXConfiguration, TalonFXFeedbackDevice, TalonFXControlMode> FalconComponent;
+    typedef BaseComponent<ctre::phoenix::motorcontrol::can::TalonFX, TalonFXConfiguration, TalonFXFeedbackDevice, TalonFXControlMode> TalonFX;
 }
 
 #endif // ROS_PHOENIX_FALCON_COMPONENT

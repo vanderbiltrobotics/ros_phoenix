@@ -82,9 +82,9 @@ ament_target_dependencies(phoenix_components
   "rclcpp"
   "rclcpp_components"
   "rcutils")
-rclcpp_components_register_nodes(phoenix_components "ros_phoenix::VictorComponent")
-rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonComponent")
-rclcpp_components_register_nodes(phoenix_components "ros_phoenix::FalconComponent")
+rclcpp_components_register_nodes(phoenix_components "ros_phoenix::VictorSPX")
+rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonSRX")
+rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonFX")
 target_link_libraries(phoenix_components ${PHOENIX_LIBRARIES} ros_phoenix__rosidl_typesupport_cpp)
 
 add_executable(phoenix_container "src/phoenix_container.cpp")

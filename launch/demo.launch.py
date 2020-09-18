@@ -13,22 +13,22 @@ def generate_launch_description():
             composable_node_descriptions=[
                 ComposableNode(
                     package='ros_phoenix',
-                    plugin='ros_phoenix::TalonComponent',
+                    plugin='ros_phoenix::TalonSRX',
                     name='front_left',
                     parameters=[{"id": 0}]),
                 ComposableNode(
                     package='ros_phoenix',
-                    plugin='ros_phoenix::TalonComponent',
+                    plugin='ros_phoenix::TalonSRX',
                     name='front_right',
                     parameters=[{"id": 1}]),
                 ComposableNode(
                     package='ros_phoenix',
-                    plugin='ros_phoenix::TalonComponent',
+                    plugin='ros_phoenix::TalonSRX',
                     name='back_left',
                     parameters=[{"id": 2}]),
                 ComposableNode(
                     package='ros_phoenix',
-                    plugin='ros_phoenix::TalonComponent',
+                    plugin='ros_phoenix::TalonSRX',
                     name='back_right',
                     parameters=[{"id": 3}])
             ],

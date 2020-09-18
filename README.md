@@ -31,14 +31,14 @@ $ ros2 run rclcpp_components component_container --ros-args -r __node:=PhoenixCo
 ```
 2. Load a ros_phoenix component into the container with the device id number
 ```
-$ ros2 component load /PhoenixContainer ros_phoenix ros_phoenix::TalonComponent --node-name my_talon -p id:=0
+$ ros2 component load /PhoenixContainer ros_phoenix ros_phoenix::TalonSRX --node-name my_talon -p id:=0
 ```
 3. Repeat step 2 for each motor controller
 
 ## Components
-- `ros_phoenix::VictorComponent`: Victor SRX Component
-- `ros_phoenix::TalonComponent`: Talon SRX Component
-- `ros_phoenix::FalconComponent`: Talon FX / Falcon 500 Component
+- `ros_phoenix::VictorSPX`: Victor SPX Component
+- `ros_phoenix::TalonSRX`: Talon SRX Component
+- `ros_phoenix::TalonFX`: Talon FX / Falcon 500 Component
 
 ## Component Interface
 ### Published Topics

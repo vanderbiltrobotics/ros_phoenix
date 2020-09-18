@@ -5,7 +5,7 @@
 
 namespace ros_phoenix
 {
-    typedef BaseComponent<VictorSPX, VictorSPXConfiguration, FeedbackDevice, VictorSPXControlMode> VictorComponent;
+    typedef BaseComponent<ctre::phoenix::motorcontrol::can::VictorSPX, VictorSPXConfiguration, FeedbackDevice, VictorSPXControlMode> VictorSPX;
 } // namespace ros_phoenix
 
 #endif // ROS_PHOENIX_VICTOR_COMPONENT

@@ -209,8 +209,7 @@ namespace ros_phoenix
         if (!this->configured_)
             return;
 
-        auto now = this->now();
-        if (now - this->last_update_ > rclcpp::Duration(0, this->watchdog_ms_ * 1000))
+        if (this->now() - this->last_update_ > rclcpp::Duration(this->watchdog_ms_ * 1000000))
         {
             this->controller_->Set(ControlMode::PercentOutput, 0.0);
             if (!this->watchdog_warned_)
@@ -219,8 +218,6 @@ namespace ros_phoenix
                 this->watchdog_warned_ = true;
             }
         }
-        this->last_update_ = now;
-        this->watchdog_warned_ = false;
 
         ros_phoenix::msg::MotorStatus status;
 
@@ -240,6 +237,9 @@ namespace ros_phoenix
     template <class MotorController, class Configuration, class FeedbackDevice, class ControlMode>
     void BaseComponent<MotorController, Configuration, FeedbackDevice, ControlMode>::set(ros_phoenix::msg::MotorControl::UniquePtr msg)
     {
+        this->last_update_ = this->now();
+        this->watchdog_warned_ = false;
+
         if (this->configured_)
             this->controller_->Set(static_cast<ControlMode>(msg->mode), msg->value);
     }

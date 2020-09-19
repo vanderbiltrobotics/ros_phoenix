@@ -1,0 +1,54 @@
+talons:
+  front_left:
+    id: 6
+    P: 3.0
+    I: 0.015
+    D: 175.0
+    inverted: False
+  front_right:
+    id: 1
+    P: 3.0
+    I: 0.015
+    D: 175.0
+    inverted: True
+  back_left:
+    id: 5
+    P: 3.0
+    I: 0.015
+    D: 175.0
+    inverted: False
+  back_right:
+    id: 3
+    P: 3.0
+    I: 0.015
+    D: 175.0
+    inverted: True
+  hinge_motor:
+    id: 9
+    inverted: False
+    invert_sensor: True
+    pot: True
+    peak_voltage: 4.0
+    P: 6.0
+    I: 0.0015
+    D: 0.0
+  lead_screw_motor:
+    id: 8
+    inverted: False
+    invert_sensor: True
+    P: 0.15
+    I: 0.001
+    D: 10.0
+  bucket_motor:
+    id: 2
+    inverted: False
+    invert_sensor: True
+    P: 8.0
+    I: 0.025
+    D: 550.0
+  conveyor_motor:
+    id: 7
+    inverted: False
+    P: 2.0
+    I: 0.02
+    D: 300.0

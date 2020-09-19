@@ -1,11 +1,11 @@
-#include "motor_control/TalonNode.h"
+#include "ros_phoenix/TalonNode.h"
 #include <ros/ros.h>
 
-using namespace motor_control;
+using namespace ros_phoenix;
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "motor_control");
+    ros::init(argc, argv, "ros_phoenix");
     ros::NodeHandle nh;
     std::vector<std::unique_ptr<TalonNode>> talons;
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(motor_control)
+project(ros_phoenix)
 
 ## Detect system architecture and save it to $arch
 EXECUTE_PROCESS(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE arch)
@@ -132,14 +132,14 @@ endif ()
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/phoenix_node.cpp)
 #add_executable(phoenix_node ${PROJECT_SOURCE_DIR}/example.cpp)
-add_executable(motor_control_cmd_example ${PROJECT_SOURCE_DIR}/src/CmdExmaple.cpp)
-add_dependencies(motor_control_cmd_example ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(ros_phoenix_cmd_example ${PROJECT_SOURCE_DIR}/src/CmdExmaple.cpp)
+add_dependencies(ros_phoenix_cmd_example ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(motor_control_node
+add_executable(ros_phoenix_node
         ${PROJECT_SOURCE_DIR}/src/TalonNode.cpp
         ${PROJECT_SOURCE_DIR}/src/MotorControl.cpp
         )
-add_dependencies(motor_control_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(ros_phoenix_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 ## Add cmake target dependencies of the executable
@@ -147,12 +147,12 @@ add_dependencies(motor_control_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXP
 #add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(motor_control_cmd_example
+target_link_libraries(ros_phoenix_cmd_example
         ${catkin_LIBRARIES}
         Threads::Threads
         CTRE_Phoenix CTRE_PhoenixCCI CTRE_PhoenixPlatformLinuxSocketCan CTRE_PhoenixCanutils
         )
-target_link_libraries(motor_control_node
+target_link_libraries(ros_phoenix_node
         ${catkin_LIBRARIES}
         Threads::Threads
         CTRE_Phoenix CTRE_PhoenixCCI CTRE_PhoenixPlatformLinuxSocketCan CTRE_PhoenixCanutils
@@ -171,7 +171,7 @@ install(FILES
         DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         )
 ## Install node executables
-install(TARGETS motor_control_node motor_control_cmd_example
+install(TARGETS ros_phoenix_node ros_phoenix_cmd_example
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

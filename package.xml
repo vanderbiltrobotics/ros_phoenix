@@ -2,9 +2,9 @@
 <package format="2">
 
     <!-- basic data -->
-    <name>motor_control</name>
+    <name>ros_phoenix</name>
     <version>1.0.0</version>
-    <description>The motor_control package</description>
+    <description>ROS Support for CTRE Phoenix Library</description>
 
     <!-- maintainers -->
     <maintainer email="vanderbiltrobotics@gmail.com">Vanderbilt Robotics</maintainer>

@@ -1,13 +1,13 @@
 #include <ros/node_handle.h>
 
-#include "motor_control/TalonNode.h"
+#include "ros_phoenix/TalonNode.h"
 
 using namespace ctre::phoenix;
 using namespace ctre::phoenix::platform;
 using namespace ctre::phoenix::motorcontrol;
 using namespace ctre::phoenix::motorcontrol::can;
 
-namespace motor_control {
+namespace ros_phoenix {
 
 TalonNode::TalonNode(const ros::NodeHandle& parent, const std::string& name, int id, const TalonConfig& config)
     : nh(parent)
@@ -228,4 +228,4 @@ void TalonNode::configureStatusPeriod()
     talon.SetStatusFramePeriod(StatusFrameEnhanced::Status_15_FirmareApiStatus, 100);
 }
 
-} // namespace motor_control
+} // namespace ros_phoenix

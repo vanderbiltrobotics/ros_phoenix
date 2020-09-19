@@ -1,11 +1,11 @@
-#ifndef MOTOR_CONTROL_TALONNODE_H
-#define MOTOR_CONTROL_TALONNODE_H
+#ifndef ROS_PHOENIX_TALONNODE_H
+#define ROS_PHOENIX_TALONNODE_H
 
 #define Phoenix_No_WPI // remove WPI dependencies
 #include "ctre/Phoenix.h"
 #include "ctre/phoenix/platform/Platform.h"
 #include "ctre/phoenix/unmanaged/Unmanaged.h"
-#include "motor_control/TalonConfig.h"
+#include "ros_phoenix/TalonConfig.h"
 #include <string>
 
 #include <dynamic_reconfigure/server.h>
@@ -14,7 +14,7 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int32.h>
 
-namespace motor_control {
+namespace ros_phoenix {
 class TalonNode {
 private:
     boost::recursive_mutex mutex;
@@ -72,6 +72,6 @@ public:
     void configureStatusPeriod();
 };
 
-} // namespace motor_control
+} // namespace ros_phoenix
 
-#endif // MOTOR_CONTROL_TALONNODE_H
+#endif // ROS_PHOENIX_TALONNODE_H

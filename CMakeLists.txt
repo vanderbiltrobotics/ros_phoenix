@@ -1,8 +1,26 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ros_phoenix)
 
-## Detect system architecture and save it to $arch
-EXECUTE_PROCESS(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE arch)
+# Verify Phoenix git submodule
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include)
+   message(INFO "Succesfully loaded CTRE Phoenix Library")
+else()
+  message(FATAL_ERROR
+    "Failed to find CTRE Phoenix Library! "
+    "Do you need to initialize the submodule?: git submodule update --init --recursive"
+  )
+endif()
+
+# Set CTRE_ARCH
+if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf")
+  set(CTRE_ARCH "raspberry")
+elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
+  set(CTRE_ARCH "jetsontx")
+elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "x86_64-linux-gnu")
+  set(CTRE_ARCH "x86-64")
+else()
+  message(FATAL_ERROR "Unsupported architecture for CTRE Phoenix")
+endif()
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++17)
@@ -81,6 +99,26 @@ generate_dynamic_reconfigure_options(
 ## Generate launch files
 roslaunch_add_file_check(${PROJECT_SOURCE_DIR}/launch/example.launch)
 
+# List of Phoenix static libraries
+set(PHOENIX_LIBRARIES CTRE_Phoenix
+                      CTRE_PhoenixCCI
+                      CTRE_PhoenixDiagnostics
+                      CTRE_PhoenixPlatform_socketcan
+                      CTRE_PhoenixCanutils
+                      CTRE_PhoenixCore
+)
+
+# Create a target for each Phoenix library
+foreach(LIBRARY ${PHOENIX_LIBRARIES})
+  add_library(${LIBRARY} STATIC IMPORTED)
+  set(LIBRARY_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/lib/${CTRE_ARCH}/lib${LIBRARY}.a)
+  SET_TARGET_PROPERTIES(${LIBRARY} PROPERTIES IMPORTED_LOCATION ${LIBRARY_LOCATION})
+  install (
+    FILES ${LIBRARY_LOCATION}
+    DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  )
+endforeach()
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -91,8 +129,8 @@ roslaunch_add_file_check(${PROJECT_SOURCE_DIR}/launch/example.launch)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-        INCLUDE_DIRS include
-        LIBRARIES CTRE_Phoenix CTRE_PhoenixCCI CTRE_PhoenixPlatformLinuxSocketCan CTRE_PhoenixCanutils
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include
+        LIBRARIES ${PHOENIX_LIBRARIES}
         CATKIN_DEPENDS roscpp geometry_msgs dynamic_reconfigure roslaunch
 )
 
@@ -103,29 +141,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-        include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include
         SYSTEM ${catkin_INCLUDE_DIRS}
 )
-
-## Declare libraries to be imported
-ADD_LIBRARY(CTRE_Phoenix STATIC IMPORTED)
-ADD_LIBRARY(CTRE_PhoenixCCI STATIC IMPORTED)
-ADD_LIBRARY(CTRE_PhoenixPlatformLinuxSocketCan STATIC IMPORTED)
-ADD_LIBRARY(CTRE_PhoenixCanutils STATIC IMPORTED)
-
-## Import appropriate libraries for architecture
-if (${arch} STREQUAL "x86_64" OR ${arch} STREQUAL "armv7l" OR ${arch} STREQUAL "aarch64")
-    SET_TARGET_PROPERTIES(CTRE_Phoenix PROPERTIES
-            IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_Phoenix.a)
-    SET_TARGET_PROPERTIES(CTRE_PhoenixCCI PROPERTIES
-            IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_PhoenixCCI.a)
-    SET_TARGET_PROPERTIES(CTRE_PhoenixPlatformLinuxSocketCan PROPERTIES
-            IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_PhoenixPlatformLinuxSocketCan.a)
-    SET_TARGET_PROPERTIES(CTRE_PhoenixCanutils PROPERTIES
-            IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_PhoenixCanutils.a)
-else ()
-    message(FATAL_ERROR "Unrecognized architecture: ${arch}")
-endif ()
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -150,26 +168,18 @@ add_dependencies(ros_phoenix_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPOR
 target_link_libraries(ros_phoenix_cmd_example
         ${catkin_LIBRARIES}
         Threads::Threads
-        CTRE_Phoenix CTRE_PhoenixCCI CTRE_PhoenixPlatformLinuxSocketCan CTRE_PhoenixCanutils
+        ${PHOENIX_LIBRARIES}
         )
 target_link_libraries(ros_phoenix_node
         ${catkin_LIBRARIES}
         Threads::Threads
-        CTRE_Phoenix CTRE_PhoenixCCI CTRE_PhoenixPlatformLinuxSocketCan CTRE_PhoenixCanutils
+        ${PHOENIX_LIBRARIES}
         )
 
 #############
 ## Install ##
 #############
 
-## Install runtime libraries
-install(FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_Phoenix.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_PhoenixCanutils.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_PhoenixCCI.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/${arch}/libCTRE_PhoenixPlatformLinuxSocketCan.a
-        DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        )
 ## Install node executables
 install(TARGETS ros_phoenix_node ros_phoenix_cmd_example
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

@@ -119,9 +119,9 @@ void TalonNode::configure()
         configureStatusPeriod();
 
         if (_config.pot) {
-            talon.ConfigSelectedFeedbackSensor(FeedbackDevice::Analog);
+            talon.ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::Analog);
         } else {
-            talon.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Relative);
+            talon.ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::CTRE_MagEncoder_Relative);
         }
 
         talon.EnableCurrentLimit(true);

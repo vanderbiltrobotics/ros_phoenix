@@ -8,7 +8,7 @@ using namespace ctre::phoenix::motorcontrol;
 using namespace ctre::phoenix::motorcontrol::can;
 
 namespace ros_phoenix {
-
+// TODO: Refactor this to wrap in custom messages and fewer publishers/subscribers
 TalonNode::TalonNode(const ros::NodeHandle& parent, const std::string& name, int id, const TalonConfig& config)
     : nh(parent)
     , _name(name)
@@ -29,7 +29,7 @@ TalonNode::TalonNode(const ros::NodeHandle& parent, const std::string& name, int
     , setVelSub(nh.subscribe("set_velocity", 1, &TalonNode::setVelocity, this))
     , setPosSub(nh.subscribe("set_position", 1, &TalonNode::setPosition, this))
     , setCurSub(nh.subscribe("set_current", 1, &TalonNode::setCurrent, this))
-    , lastUpdate(ros::Time::now())
+    , lastUpdate(ros::Time::now()) // watchdog - turn off talon if we haven't gotten an update in a while
     , _controlMode(ControlMode::PercentOutput)
     , _output(0.0)
     , disabled(false)
@@ -217,6 +217,7 @@ void TalonNode::configureStatusPeriod()
 {
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
 
+    // Sets status frame polling rate for methods like getTemperature()
     talon.SetStatusFramePeriod(StatusFrameEnhanced::Status_1_General, 20);
     talon.SetStatusFramePeriod(StatusFrameEnhanced::Status_2_Feedback0, 20);
     talon.SetStatusFramePeriod(StatusFrameEnhanced::Status_3_Quadrature, 20);

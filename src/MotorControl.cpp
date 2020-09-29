@@ -9,6 +9,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     std::vector<std::unique_ptr<TalonNode>> talons;
 
+    // Need to set this so that phoenix knows what interface to use
     std::string interface = "can0";
     ctre::phoenix::platform::can::SetCANInterface(interface.c_str());
 
@@ -18,7 +19,7 @@ int main(int argc, char** argv)
         const std::string name(p.first);
         XmlRpc::XmlRpcValue v(p.second);
         if (v.getType() == XmlRpc::XmlRpcValue::TypeStruct) {
-            TalonConfig config;
+            TalonConfig config; // Generated from Talon.cfg
             dynamic_reconfigure::Server<TalonConfig>().getConfigDefault(config);
             if (v.hasMember("id")) {
                 int id = v["id"];
@@ -54,6 +55,7 @@ int main(int argc, char** argv)
     while (ros::ok()) {
         ctre::phoenix::unmanaged::FeedEnable(100);
 
+        // There should be a better way of doing this
         std::for_each(talons.begin(), talons.end(), [](std::unique_ptr<TalonNode>& talon) { talon->update(); });
 
         ros::spinOnce();

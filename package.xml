@@ -22,4 +22,8 @@
     <depend>dynamic_reconfigure</depend>
     <depend>roslaunch</depend>
 
+    <!-- build messages -->
+    <build_depend>message_generation</build_depend>
+    <exec_depend>message_runtime</exec_depend>
+
 </package>

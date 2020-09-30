@@ -34,6 +34,7 @@ find_package(catkin REQUIRED
         geometry_msgs
         dynamic_reconfigure
         roslaunch
+        message_generation
         )
 
 ## System dependencies are found with CMake's conventions
@@ -65,11 +66,11 @@ find_package(Threads REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+   FILES
+   MotorControl.msg
+   MotorStatus.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -86,10 +87,10 @@ find_package(Threads REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-#generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-#)
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+)
 
 ## add dynamic reconfigure api
 generate_dynamic_reconfigure_options(
@@ -131,7 +132,7 @@ endforeach()
 catkin_package(
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include
         LIBRARIES ${PHOENIX_LIBRARIES}
-        CATKIN_DEPENDS roscpp geometry_msgs dynamic_reconfigure roslaunch
+        CATKIN_DEPENDS roscpp geometry_msgs dynamic_reconfigure roslaunch message_runtime
 )
 
 ###########

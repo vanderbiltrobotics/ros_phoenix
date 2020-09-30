@@ -15,20 +15,8 @@ TalonNode::TalonNode(const ros::NodeHandle& parent, const std::string& name, int
     , server(mutex, nh)
     , _config(config)
     , talon(id)
-    , tempPub(nh.advertise<std_msgs::Float64>("temperature", 1))
-    , busVoltagePub(nh.advertise<std_msgs::Float64>("bus_voltage", 1))
-    , outputPercentPub(nh.advertise<std_msgs::Float64>("output_percent", 1))
-    , outputVoltagePub(nh.advertise<std_msgs::Float64>("output_voltage", 1))
-    , outputCurrentPub(nh.advertise<std_msgs::Float64>("output_current", 1))
-    , analogPub(nh.advertise<std_msgs::Float64>("analog_input", 1))
-    , posPub(nh.advertise<std_msgs::Int32>("position", 1))
-    , velPub(nh.advertise<std_msgs::Int32>("velocity", 1))
-    , fwdPub(nh.advertise<std_msgs::Bool>("forward_limit", 1))
-    , revPub(nh.advertise<std_msgs::Bool>("reverse_limit", 1))
-    , setPercentSub(nh.subscribe("set_percent_output", 1, &TalonNode::setPercentOutput, this))
-    , setVelSub(nh.subscribe("set_velocity", 1, &TalonNode::setVelocity, this))
-    , setPosSub(nh.subscribe("set_position", 1, &TalonNode::setPosition, this))
-    , setCurSub(nh.subscribe("set_current", 1, &TalonNode::setCurrent, this))
+    , statusPub(nh.advertise<MotorStatus>("status", 1))
+    , setSub(nh.subscribe("set", 1, &TalonNode::set, this))
     , lastUpdate(ros::Time::now()) // watchdog - turn off talon if we haven't gotten an update in a while
     , _controlMode(ControlMode::PercentOutput)
     , _output(0.0)
@@ -42,35 +30,11 @@ TalonNode::TalonNode(const ros::NodeHandle& parent, const std::string& name, int
     talon.NeutralOutput();
 }
 
-void TalonNode::setPercentOutput(std_msgs::Float64 output)
+void TalonNode::set(MotorControl output)
 {
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
-    this->_controlMode = ControlMode::PercentOutput;
-    this->_output = output.data;
-    this->lastUpdate = ros::Time::now();
-}
-
-void TalonNode::setVelocity(std_msgs::Float64 output)
-{
-    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
-    this->_controlMode = ControlMode::Velocity;
-    this->_output = output.data;
-    this->lastUpdate = ros::Time::now();
-}
-
-void TalonNode::setPosition(std_msgs::Float64 output)
-{
-    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
-    this->_controlMode = ControlMode::Position;
-    this->_output = output.data;
-    this->lastUpdate = ros::Time::now();
-}
-
-void TalonNode::setCurrent(std_msgs::Float64 output)
-{
-    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
-    this->_controlMode = ControlMode::Position;
-    this->_output = output.data;
+    this->_controlMode = (ControlMode) output.mode;
+    this->_output = output.value;
     this->lastUpdate = ros::Time::now();
 }
 
@@ -172,45 +136,21 @@ void TalonNode::update()
         talon.Set(this->_controlMode, this->_output);
     }
 
-    std_msgs::Float64 temperature;
-    temperature.data = talon.GetTemperature();
-    tempPub.publish(temperature);
+    MotorStatus status;
+    status.temperature = talon.GetTemperature();
+    status.bus_voltage = talon.GetBusVoltage();
 
-    std_msgs::Float64 busVoltage;
-    busVoltage.data = talon.GetBusVoltage();
-    busVoltagePub.publish(busVoltage);
+    status.output_percent = talon.GetMotorOutputPercent();
+    status.output_voltage = talon.GetMotorOutputVoltage();
+    status.output_current = talon.GetOutputCurrent();
 
-    std_msgs::Float64 outputPercent;
-    outputPercent.data = talon.GetMotorOutputPercent();
-    outputPercentPub.publish(outputPercent);
+    status.position = talon.GetSelectedSensorPosition();
+    status.velocity = talon.GetSelectedSensorVelocity() * 10;
+    
+    status.fwd_limit = talon.GetSensorCollection().IsFwdLimitSwitchClosed();
+    status.rev_limit = talon.GetSensorCollection().IsRevLimitSwitchClosed();
 
-    std_msgs::Float64 outputVoltage;
-    outputVoltage.data = talon.GetMotorOutputVoltage();
-    outputVoltagePub.publish(outputVoltage);
-
-    std_msgs::Float64 outputCurrent;
-    outputCurrent.data = talon.GetOutputCurrent();
-    outputCurrentPub.publish(outputCurrent);
-
-    std_msgs::Float64 analogInput;
-    analogInput.data = talon.GetSensorCollection().GetAnalogIn();
-    analogPub.publish(analogInput);
-
-    std_msgs::Bool forward_limit;
-    forward_limit.data = talon.GetSensorCollection().IsFwdLimitSwitchClosed();
-    fwdPub.publish(forward_limit);
-
-    std_msgs::Bool reverse_limit;
-    reverse_limit.data = talon.GetSensorCollection().IsRevLimitSwitchClosed();
-    fwdPub.publish(reverse_limit);
-
-    std_msgs::Int32 position;
-    position.data = talon.GetSelectedSensorPosition();
-    posPub.publish(position);
-
-    std_msgs::Int32 velocity;
-    velocity.data = talon.GetSelectedSensorVelocity() * 10;
-    velPub.publish(velocity);
+    statusPub.publish(status);
 }
 
 void TalonNode::configureStatusPeriod()

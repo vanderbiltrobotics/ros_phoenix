@@ -1,6 +1,6 @@
-#include "geometry_msgs/Twist.h"
 #include "ros/ros.h"
-#include "std_msgs/Float64.h"
+#include "geometry_msgs/Twist.h"
+#include "ros_phoenix/MotorControl.h"
 
 static double leftMotorOutput = 0.0;
 static double rightMotorOutput = 0.0;
@@ -35,20 +35,22 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ros::Subscriber sub = nh.subscribe("cmd_vel", 1, cmdCallback);
 
-    ros::Publisher fl = nh.advertise<std_msgs::Float64>("/front_left/set_percent_output", 1);
-    ros::Publisher fr = nh.advertise<std_msgs::Float64>("/front_right/set_percent_output", 1);
-    ros::Publisher bl = nh.advertise<std_msgs::Float64>("/back_left/set_percent_output", 1);
-    ros::Publisher br = nh.advertise<std_msgs::Float64>("/back_right/set_percent_output", 1);
+    ros::Publisher fl = nh.advertise<ros_phoenix::MotorControl>("/front_left/set", 1);
+    ros::Publisher fr = nh.advertise<ros_phoenix::MotorControl>("/front_right/set", 1);
+    ros::Publisher bl = nh.advertise<ros_phoenix::MotorControl>("/back_left/set", 1);
+    ros::Publisher br = nh.advertise<ros_phoenix::MotorControl>("/back_right/set", 1);
 
     ros::Rate loop_rate(50);
     while (ros::ok()) {
-        std_msgs::Float64Ptr left(new std_msgs::Float64);
-        left->data = leftMotorOutput;
+        ros_phoenix::MotorControlPtr left(new ros_phoenix::MotorControl);
+        left->mode = ros_phoenix::MotorControl::PERCENT_OUTPUT;
+        left->value = leftMotorOutput;
         fl.publish(left);
         bl.publish(left);
 
-        std_msgs::Float64Ptr right(new std_msgs::Float64);
-        right->data = rightMotorOutput;
+        ros_phoenix::MotorControlPtr right(new ros_phoenix::MotorControl);
+        right->mode = ros_phoenix::MotorControl::PERCENT_OUTPUT;
+        right->value = rightMotorOutput;
         fr.publish(right);
         br.publish(right);
 

@@ -1,0 +1,25 @@
+talons:
+    front_left:
+        id: 18
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: False
+    front_right:
+        id: 11
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: True
+    back_left:
+        id: 12
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: False
+    back_right:
+        id: 17
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: True

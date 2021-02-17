@@ -1,0 +1,7 @@
+talons:
+    shoulder_joint:
+        id: 1
+    elbow_joint:
+        id: 2
+    wrist_joint:
+        id: 3

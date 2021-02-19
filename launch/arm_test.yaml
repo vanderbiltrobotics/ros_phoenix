@@ -1,7 +1,7 @@
 talons:
-    shoulder_joint:
-        id: 1
-    elbow_joint:
-        id: 2
-    wrist_joint:
-        id: 3
+    shoulder:
+        id: 11
+    elbow:
+        id: 17
+    wrist:
+        id: 18

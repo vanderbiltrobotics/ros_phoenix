@@ -1,0 +1,7 @@
+talons:
+    shoulder:
+        id: 11
+    elbow:
+        id: 17
+    wrist:
+        id: 18

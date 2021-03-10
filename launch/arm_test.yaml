@@ -1,7 +1,10 @@
 talons:
     shoulder:
-        id: 11
+        id: 7
+        inverted: True
     elbow:
-        id: 17
+        id: 14
+        inverted: True
     wrist:
-        id: 18
+        id: 16
+        inverted: True

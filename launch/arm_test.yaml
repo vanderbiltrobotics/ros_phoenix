@@ -1,6 +1,7 @@
 talons:
     shoulder:
         id: 17
+        pot: True
     elbow:
         id: 14
         pot: True

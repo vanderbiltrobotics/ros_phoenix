@@ -1,7 +1,9 @@
 talons:
     shoulder:
-        id: 11
-    elbow:
         id: 17
+    elbow:
+        id: 14
+        pot: True
     wrist:
-        id: 18
+        id: 16
+        pot: true

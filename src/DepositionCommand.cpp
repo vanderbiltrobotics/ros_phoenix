@@ -1,10 +1,11 @@
 #include "ros/ros.h"
 #include "ros_phoenix/MotorControl.h"
+#include "std_msgs/Float64.h"
 
 static double depositionMotorOutput = 0.0;
 
-void cmdCallback(const std_msg::Float64 &msg){
-    depositionMotorOutput = msg->data;
+void cmdCallback(const std_msgs::Float64 &msg){
+    depositionMotorOutput = msg.data;
     ROS_INFO("DepositionMotor=%f", depositionMotorOutput);
 }
 

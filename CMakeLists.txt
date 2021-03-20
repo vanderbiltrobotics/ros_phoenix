@@ -155,6 +155,9 @@ include_directories(
 add_executable(ros_phoenix_cmd_example ${PROJECT_SOURCE_DIR}/src/CmdExmaple.cpp)
 add_dependencies(ros_phoenix_cmd_example ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(ros_phoenix_fd_teleop ${PROJECT_SOURCE_DIR}/src/FDTeleop.cpp)
+add_dependencies(ros_phoenix_fd_teleop ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(ros_phoenix_arm_command ${PROJECT_SOURCE_DIR}/src/ArmCommand.cpp)
 add_dependencies(ros_phoenix_arm_command ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
@@ -174,6 +177,11 @@ add_dependencies(ros_phoenix_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPOR
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(ros_phoenix_cmd_example
+        ${catkin_LIBRARIES}
+        Threads::Threads
+        ${PHOENIX_LIBRARIES}
+        )
+target_link_libraries(ros_phoenix_fd_teleop
         ${catkin_LIBRARIES}
         Threads::Threads
         ${PHOENIX_LIBRARIES}
@@ -199,7 +207,7 @@ target_link_libraries(ros_phoenix_node
 #############
 
 ## Install node executables
-install(TARGETS ros_phoenix_node ros_phoenix_cmd_example ros_phoenix_arm_command ros_phoenix_deposition_command
+install(TARGETS ros_phoenix_node ros_phoenix_fd_teleop ros_phoenix_cmd_example ros_phoenix_arm_command ros_phoenix_deposition_command
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -1,0 +1,13 @@
+<launch>
+
+  <node pkg="teleop_a" type="tank_speeds.py" name="tank_speeds" />
+  <node pkg="joy" type="joy_node" name="joy" respawn="true" >
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" type="double" value="0.05" />
+  </node>
+
+  <rosparam command="load" file="$(find ros_phoenix)/launch/test_frame.yaml" />
+  <node pkg="ros_phoenix" type="ros_phoenix_node" name="ros_phoenix" respawn="false" />
+  <node pkg="ros_phoenix" type="ros_phoenix_fd_teleop" name="fd_teleop" respawn="false" />
+
+</launch>

@@ -170,6 +170,11 @@ add_executable(ros_phoenix_node
         )
 add_dependencies(ros_phoenix_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(fake_ros_phoenix_node
+        ${PROJECT_SOURCE_DIR}/src/FakeTalonNode.cpp
+        ${PROJECT_SOURCE_DIR}/src/FakeMotorControl.cpp
+        )
+add_dependencies(fake_ros_phoenix_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -201,13 +206,18 @@ target_link_libraries(ros_phoenix_node
         Threads::Threads
         ${PHOENIX_LIBRARIES}
         )
+target_link_libraries(fake_ros_phoenix_node
+        ${catkin_LIBRARIES}
+        Threads::Threads
+        ${PHOENIX_LIBRARIES}
+        )
 
 #############
 ## Install ##
 #############
 
 ## Install node executables
-install(TARGETS ros_phoenix_node ros_phoenix_fd_teleop ros_phoenix_cmd_example ros_phoenix_arm_command ros_phoenix_deposition_command
+install(TARGETS fake_ros_phoenix_node ros_phoenix_node ros_phoenix_fd_teleop ros_phoenix_cmd_example ros_phoenix_arm_command ros_phoenix_deposition_command
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

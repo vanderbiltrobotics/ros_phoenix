@@ -1,0 +1,5 @@
+<launch>
+    <rosparam command="load" file="$(find ros_phoenix)/launch/arm_test.yaml" />
+    <node pkg="ros_phoenix" type="fake_ros_phoenix_node" name="fake_ros_phoenix" respawn="false" />
+    <node pkg="ros_phoenix" type="ros_phoenix_arm_command" name="arm_command" respawn="false" />
+</launch>

@@ -140,7 +140,7 @@ void FakeTalonNode::update()
     status.temperature = 0;
     status.bus_voltage = 0;
 
-    status.output_percent = 0;
+    status.output_percent = this->_output;
     status.output_voltage = 0;
     status.output_current = 0;
 

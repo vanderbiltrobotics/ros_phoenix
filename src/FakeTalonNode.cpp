@@ -9,7 +9,7 @@ using namespace ctre::phoenix::motorcontrol::can;
 
 namespace ros_phoenix {
 // TODO: Refactor this to wrap in custom messages and fewer publishers/subscribers
-FakeTalonNode::FakeTalonNode(const ros::NodeHandle& parent, const std::string& name, int id, const TalonConfig& config)
+FakeTalonNode::FakeTalonNode(const ros::NodeHandle& parent, const std::string& name, int id, const TalonConfig& config, const double _pot_low, const double _pot_high)
     : nh(parent)
     , _name(name)
     , server(mutex, nh)
@@ -23,7 +23,12 @@ FakeTalonNode::FakeTalonNode(const ros::NodeHandle& parent, const std::string& n
     , disabled(false)
     , configured(false)
     , not_configured_warned(false)
+    , pot_low(_pot_low)
+    , pot_high(_pot_high)
+    , _lastPosition(_pot_low)
 {
+    ROS_INFO("POT LOW: %d", pot_low);
+    ROS_INFO("POT HIGH: %d", pot_high);
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     server.updateConfig(_config);
     server.setCallback(boost::bind(&FakeTalonNode::reconfigure, this, _1, _2));
@@ -116,19 +121,6 @@ void FakeTalonNode::update()
         this->configure();
     }
 
-    // Disable the Talon if we aren't getting commands
-    /*if (ros::Time::now() - lastUpdate > ros::Duration(0.2)) {
-        if (!this->disabled)
-            ROS_WARN("Talon disabled for not receiving updates: %s", _name.c_str());
-        this->disabled = true;
-        this->_controlMode = ControlMode::PercentOutput;
-        this->_output = 0.0;
-    } else {
-        if (this->disabled)
-            ROS_INFO("Talon re-enabled for receiving updates: %s", _name.c_str());
-        this->disabled = false;
-    }*/
-
     // Set Talon output
     if (this->_output == 0.0 or !this->configured) {
         talon.NeutralOutput();
@@ -150,14 +142,20 @@ void FakeTalonNode::update()
     status.fwd_limit = false;
     status.rev_limit = false;
 
-    if(status.position>1024) {
-        status.position=1024;
+    double diff = pot_high - pot_low;
+    status.position = _lastPosition + ((diff > 0 ? 1 : -1) * this->_output);
+    double trueHigh = (diff > 0 ? pot_high : pot_low);
+    double trueLow = (diff > 0 ? pot_low : pot_high);
+    if (status.position > trueHigh) {
+        status.position = trueHigh;
     }
-    if(status.position<0) {
-        status.position=0;
+
+    if (status.position < trueLow) {
+        status.position = trueLow;
     }
+
     statusPub.publish(status);
-    _lastPosition=status.position;
+    _lastPosition = status.position;
 }
 
 void FakeTalonNode::configureStatusPeriod()

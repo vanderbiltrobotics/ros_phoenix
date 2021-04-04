@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import rospy
 from ros_phoenix.msg import MotorStatus
-from std_msgs.msg import Float32
+from std_msgs.msg import Float64
 
 # LOW = retracted
 # HIGH = out
@@ -18,7 +18,7 @@ def interpolate(lowX, lowY, highX, highY, x):
 
     cons = (-1 * (slope * lowX)) + lowY
 
-    return (slope * calculateX) + cons
+    return (slope * x) + cons
 
 
 def shoulder_callback(status):
@@ -60,9 +60,9 @@ def main():
     rospy.Subscriber("/elbow/status", MotorStatus, elbow_callback)
     rospy.Subscriber("/wrist/status", MotorStatus, wrist_callback)
 
-    shoulder_pub = rospy.Publisher("/shoulder/angle", Float32, queue_size = 10)
-    elbow_pub = rospy.Publisher("/elbow/angle", Float32, queue_size = 10)
-    wrist_pub = rospy.Publisher("/wrist/angle", Float32, queue_size = 10)
+    shoulder_pub = rospy.Publisher("/shoulder/angle", Float64, queue_size = 10)
+    elbow_pub = rospy.Publisher("/elbow/angle", Float64, queue_size = 10)
+    wrist_pub = rospy.Publisher("/wrist/angle", Float64, queue_size = 10)
 
     rospy.spin()
 

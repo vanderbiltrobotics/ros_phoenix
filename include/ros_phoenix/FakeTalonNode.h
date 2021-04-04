@@ -36,9 +36,11 @@ private:
     bool configured;
     bool not_configured_warned;
     double _lastPosition;
+    double pot_low;
+    double pot_high;
 
 public:
-    FakeTalonNode(const ros::NodeHandle& parent, const std::string& name, int id, const TalonConfig& config);
+    FakeTalonNode(const ros::NodeHandle& parent, const std::string& name, int id, const TalonConfig& config, const double _pot_low, const double _pot_high);
 
     FakeTalonNode& operator=(const FakeTalonNode&) = delete;
 

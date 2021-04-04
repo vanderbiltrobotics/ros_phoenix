@@ -23,7 +23,7 @@ int main(int argc, char** argv){
     ros::Publisher wristPublisher = nh.advertise<ros_phoenix::MotorControl>("/wrist/set", 1);
     
     ros::Rate loop_rate(50);
-    while (ros::ok()){
+    while (ros::ok()) {
         ros_phoenix::MotorControlPtr shoulder(new ros_phoenix::MotorControl);
         shoulder->mode = ros_phoenix::MotorControl::PERCENT_OUTPUT;
         shoulder->value = shoulderOutput;

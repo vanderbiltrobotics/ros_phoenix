@@ -41,7 +41,7 @@ int main(int argc, char** argv)
                     config.F = (double)v["F"];
 
                 auto node = ros::NodeHandle(nh, name);
-                talons.push_back(std::make_unique<FakeTalonNode>(node, name, id, config, (double)v["pot_low"], (double)v["pot_high"]));
+                talons.push_back(std::make_unique<FakeTalonNode>(node, name, id, config, (int)v["pot_low"], (int)v["pot_high"]));
                 ROS_INFO("Created Talon with name '%s' and id '%d'", name.c_str(), id);
             } else {
                 ROS_WARN("Failed to create Talon '%s' with missing ID number!", name.c_str());

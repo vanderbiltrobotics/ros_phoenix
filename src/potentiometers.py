@@ -10,15 +10,16 @@ shoulder_pub = None
 elbow_pub = None
 wrist_pub = None
 
+
 def interpolate(lowX, lowY, highX, highY, x):
-    changeX = highX - lowX
+    assert highX <= x <= lowX
+
+    changeX = lowX - highX  # idk why high is less than low lol
     changeY = highY - lowY
 
-    slope = float(changeX)/float(changeY)
+    slope = changeY / changeX
 
-    cons = (-1 * (slope * lowX)) + lowY
-
-    return (slope * x) + cons
+    return (slope * (x - lowX)) + lowY
 
 
 def shoulder_callback(status):
@@ -28,7 +29,7 @@ def shoulder_callback(status):
     ANGLE_LOW = 2
     ANGLE_HIGH = 3.222
 
-    shoulder_pub.publish(interpolate(POT_LOW, POT_HIGH, 0, ANGLE_HIGH, status.position))
+    shoulder_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, status.position))
 
 
 def elbow_callback(status):
@@ -38,7 +39,7 @@ def elbow_callback(status):
     ANGLE_LOW = -0.663
     ANGLE_HIGH = 0.506
 
-    elbow_pub.publish(interpolate(POT_LOW, POT_HIGH, 0, ANGLE_HIGH, status.position))
+    elbow_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, status.position))
 
 
 # angles from urdf
@@ -49,7 +50,7 @@ def wrist_callback(status):
     ANGLE_LOW = -0.89
     ANGLE_HIGH = 0.174
 
-    wrist_pub.publish(interpolate(POT_LOW, POT_HIGH, 0, ANGLE_HIGH, status.position))
+    wrist_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, status.position))
 
 
 def main():
@@ -65,6 +66,7 @@ def main():
     rospy.Subscriber("/wrist/status", MotorStatus, wrist_callback)
 
     rospy.spin()
+
 
 if __name__ == "__main__":
     main()

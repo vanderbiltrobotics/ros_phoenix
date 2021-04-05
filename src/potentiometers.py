@@ -56,13 +56,13 @@ def main():
     global shoulder_pub, elbow_pub, wrist_pub
     rospy.init_node("potentiometers")
 
+    shoulder_pub = rospy.Publisher("/shoulder/angle", Float64, queue_size=10)
+    elbow_pub = rospy.Publisher("/elbow/angle", Float64, queue_size=10)
+    wrist_pub = rospy.Publisher("/wrist/angle", Float64, queue_size=10)
+
     rospy.Subscriber("/shoulder/status", MotorStatus, shoulder_callback)
     rospy.Subscriber("/elbow/status", MotorStatus, elbow_callback)
     rospy.Subscriber("/wrist/status", MotorStatus, wrist_callback)
-
-    shoulder_pub = rospy.Publisher("/shoulder/angle", Float64, queue_size = 10)
-    elbow_pub = rospy.Publisher("/elbow/angle", Float64, queue_size = 10)
-    wrist_pub = rospy.Publisher("/wrist/angle", Float64, queue_size = 10)
 
     rospy.spin()
 

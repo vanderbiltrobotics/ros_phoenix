@@ -1,14 +1,30 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
 #include "ros_phoenix/MotorControl.h"
+#include <cmath> 
 
 static double leftMotorOutput = 0.0;
 static double rightMotorOutput = 0.0;
+static double MAX_LINEAR_SPEED=0.6;
+static double MAX_ANGULAR_SPEED=0.4;
+static double RADIUS=1;
 
 void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
-    double moveValue = msg->linear.x;
-    double rotateValue = msg->angular.z;
+    //double moveValue = msg->linear.x;
+    //double rotateValue = msg->angular.z;
+
+    double moveValue = msg->linear.x/MAX_LINEAR_SPEED;
+    double rotateValue = RADIUS*(msg->angular.z/MAX_ANGULAR_SPEED);
+    if(std::abs(moveValue)>1 || std::abs(rotateValue)>1) {
+        if(std::abs(moveValue)>std::abs(rotateValue)) {
+            moveValue=moveValue/std::abs(moveValue);
+            rotateValue=rotateValue/std::abs(moveValue);
+        } else {
+            moveValue=moveValue/std::abs(rotateValue);
+            rotateValue=rotateValue/std::abs(rotateValue);
+        }
+    }
     if (moveValue > 0.0) {
         if (rotateValue > 0.0) {
             leftMotorOutput = moveValue - rotateValue;

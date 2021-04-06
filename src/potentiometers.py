@@ -11,15 +11,12 @@ elbow_pub = None
 wrist_pub = None
 
 
-def interpolate(lowX, lowY, highX, highY, x):
-    assert highX <= x <= lowX
-
-    changeX = lowX - highX  # idk why high is less than low lol
-    changeY = highY - lowY
-
-    slope = changeY / changeX
-
-    return (slope * (x - lowX)) + lowY
+def interpolate(x1, y1, x2, y2, x):
+	assert x1 <= x <= x2 or x2 <= x <= x1
+	m = ((y2 - y1) / (x2 - x1))
+	b = y1 - (m * x1)
+	
+	return (m * x) + b
 
 
 def shoulder_callback(status):

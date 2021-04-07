@@ -136,7 +136,6 @@ void FakeTalonNode::update()
     status.output_voltage = 0;
     status.output_current = 0;
 
-    status.position = _lastPosition+this->_output;
     status.velocity = this->_output;
     
     status.fwd_limit = false;

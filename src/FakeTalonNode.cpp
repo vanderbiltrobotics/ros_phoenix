@@ -137,14 +137,13 @@ void FakeTalonNode::update()
     status.output_voltage = 0;
     status.output_current = 0;
 
-    status.velocity = this->_output;
-    
     status.fwd_limit = false;
     status.rev_limit = false;
 
     double diff = pot_high - pot_low;
     ros::Time cur = ros::Time::now();
-    status.position = _lastPosition + ((diff > 0 ? 1 : -1) * this->_output * (cur - lastPosUpdate).toSec() * 5);
+    double dTime = (cur - lastPosUpdate).toSec();
+    status.position = _lastPosition + ((diff > 0 ? 1 : -1) * this->_output * dTime);
     lastPosUpdate = cur;
     double trueHigh = (diff > 0 ? pot_high : pot_low);
     double trueLow = (diff > 0 ? pot_low : pot_high);
@@ -155,6 +154,8 @@ void FakeTalonNode::update()
     if (status.position < trueLow) {
         status.position = trueLow;
     }
+    
+    status.velocity = (status.position - _lastPosition) / dTime;
 
     statusPub.publish(status);
     _lastPosition = status.position;

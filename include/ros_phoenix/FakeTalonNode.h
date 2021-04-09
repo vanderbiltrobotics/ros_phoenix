@@ -38,6 +38,7 @@ private:
     double _lastPosition;
     double pot_low;
     double pot_high;
+    ros::Time lastPosUpdate;
 
 public:
     FakeTalonNode(const ros::NodeHandle& parent, const std::string& name, int id, const TalonConfig& config, const double _pot_low, const double _pot_high);

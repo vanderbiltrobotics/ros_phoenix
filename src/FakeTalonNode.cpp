@@ -26,6 +26,7 @@ FakeTalonNode::FakeTalonNode(const ros::NodeHandle& parent, const std::string& n
     , pot_low(_pot_low)
     , pot_high(_pot_high)
     , _lastPosition(_pot_low)
+    , lastPosUpdate(ros::Time::now())
 {
     ROS_INFO("POT LOW: %d", pot_low);
     ROS_INFO("POT HIGH: %d", pot_high);
@@ -142,7 +143,9 @@ void FakeTalonNode::update()
     status.rev_limit = false;
 
     double diff = pot_high - pot_low;
-    status.position = _lastPosition + ((diff > 0 ? 1 : -1) * this->_output);
+    ros::Time cur = ros::Time::now();
+    status.position = _lastPosition + ((diff > 0 ? 1 : -1) * this->_output * (cur - lastPosUpdate).toSec() * 5);
+    lastPosUpdate = cur;
     double trueHigh = (diff > 0 ? pot_high : pot_low);
     double trueLow = (diff > 0 ? pot_low : pot_high);
     if (status.position > trueHigh) {

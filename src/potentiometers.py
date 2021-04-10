@@ -12,7 +12,7 @@ wrist_pub = None
 
 
 def interpolate(x1, y1, x2, y2, x):
-	assert x1 <= x <= x2 or x2 <= x <= x1
+	assert (x1 - 15) <= x <= (x2 + 15) or (x2 - 15) <= x <= (x1 + 15)
 	m = ((y2 - y1) / (x2 - x1))
 	b = y1 - (m * x1)
 	
@@ -21,8 +21,8 @@ def interpolate(x1, y1, x2, y2, x):
 
 def shoulder_callback(status):
     global shoulder_pub
-    POT_LOW = 294
-    POT_HIGH = 13
+    POT_LOW = 82
+    POT_HIGH = 372
     ANGLE_LOW = 2
     ANGLE_HIGH = 3.222
 
@@ -31,8 +31,8 @@ def shoulder_callback(status):
 
 def elbow_callback(status):
     global elbow_pub
-    POT_LOW = 1023
-    POT_HIGH = 747
+    POT_LOW = 747
+    POT_HIGH = 1023
     ANGLE_LOW = -0.663
     ANGLE_HIGH = 0.506
 
@@ -42,10 +42,10 @@ def elbow_callback(status):
 # angles from urdf
 def wrist_callback(status):
     global wrist_pub
-    POT_LOW = 659
-    POT_HIGH = 258
-    ANGLE_LOW = -0.89
-    ANGLE_HIGH = 0.174
+    POT_LOW = 258
+    POT_HIGH = 659
+    ANGLE_LOW = 0.174
+    ANGLE_HIGH = -0.89
 
     wrist_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, status.position))
 

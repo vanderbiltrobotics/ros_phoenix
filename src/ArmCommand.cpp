@@ -26,17 +26,21 @@ int main(int argc, char** argv){
     while (ros::ok()) {
         ros_phoenix::MotorControlPtr shoulder(new ros_phoenix::MotorControl);
         shoulder->mode = ros_phoenix::MotorControl::PERCENT_OUTPUT;
-        shoulder->value = shoulderOutput;
+        shoulder->value = shoulderOutput / 100;
+        if(shoulder->value < -1 || shoulder->value > 1) ROS_WARN("Shoulder is %f", shoulder->value);
         shoulderPublisher.publish(shoulder);
         
         ros_phoenix::MotorControlPtr elbow(new ros_phoenix::MotorControl);
         elbow->mode = ros_phoenix::MotorControl::PERCENT_OUTPUT;
-        elbow->value = elbowOutput;
+        elbow->value = elbowOutput / 100;
+        if(elbow->value < -1 || elbow->value > 1) ROS_WARN("Elbow is %f", elbow->value);
         elbowPublisher.publish(elbow);
         
         ros_phoenix::MotorControlPtr wrist(new ros_phoenix::MotorControl);
         wrist->mode = ros_phoenix::MotorControl::PERCENT_OUTPUT;
-        wrist->value = wristOutput;
+        wrist->value = wristOutput / 100;
+        if(wrist->value < -1 || wrist->value > 1) ROS_WARN("Wrist is %f", wrist->value);
+
         wristPublisher.publish(wrist);
         
         ros::spinOnce();

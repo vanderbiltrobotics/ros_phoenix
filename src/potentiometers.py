@@ -21,8 +21,8 @@ def interpolate(x1, y1, x2, y2, x):
 
 def shoulder_callback(status):
     global shoulder_pub
-    POT_LOW = 82
-    POT_HIGH = 372
+    POT_LOW = 93
+    POT_HIGH = 392
     ANGLE_LOW = 2
     ANGLE_HIGH = 3.222
 
@@ -31,7 +31,7 @@ def shoulder_callback(status):
 
 def elbow_callback(status):
     global elbow_pub
-    POT_LOW = 747
+    POT_LOW = 737
     POT_HIGH = 1023
     ANGLE_LOW = -0.663
     ANGLE_HIGH = 0.506
@@ -42,8 +42,8 @@ def elbow_callback(status):
 # angles from urdf
 def wrist_callback(status):
     global wrist_pub
-    POT_LOW = 258
-    POT_HIGH = 659
+    POT_LOW = 265
+    POT_HIGH = 668
     ANGLE_LOW = 0.174
     ANGLE_HIGH = -0.89
 

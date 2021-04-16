@@ -26,7 +26,7 @@ def shoulder_callback(status):
     ANGLE_LOW = 2
     ANGLE_HIGH = 3.222
 
-    shoulder_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, status.position))
+    shoulder_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, -status.position))
 
 
 def elbow_callback(status):
@@ -47,7 +47,7 @@ def wrist_callback(status):
     ANGLE_LOW = 0.174
     ANGLE_HIGH = -0.89
 
-    wrist_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, status.position))
+    wrist_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, -status.position))
 
 
 def main():

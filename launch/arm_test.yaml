@@ -2,9 +2,12 @@ talons:
     shoulder:
         id: 17
         pot: True
+        inverted: True
     elbow:
         id: 14
         pot: True
+        inverted: False
     wrist:
         id: 16
         pot: True
+        inverted: True

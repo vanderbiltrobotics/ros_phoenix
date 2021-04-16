@@ -1,12 +1,13 @@
 talons:
     front_left:
-        id: 18
+        id: 15
+        inverted: True
     front_right:
-        id: 11
-        inverted: True
-    back_left:
-        id: 12
+        id: 18
         inverted: False
-    back_right:
-        id: 17
+    back_left:
+        id: 10
         inverted: True
+    back_right:
+        id: 19
+        inverted: False

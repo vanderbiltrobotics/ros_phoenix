@@ -15,11 +15,11 @@ wrist_vel_pub = None
 
 
 def interpolate(x1, y1, x2, y2, x):
-	assert (x1 - 15) <= x <= (x2 + 15) or (x2 - 15) <= x <= (x1 + 15)
-	m = ((y2 - y1) / (x2 - x1))
-	b = y1 - (m * x1)
-	
-	return (m * x) + b
+    assert (x1 - 15) <= x <= (x2 + 15) or (x2 - 15) <= x <= (x1 + 15)
+    m = ((y2 - y1) / (x2 - x1))
+    b = y1 - (m * x1)
+    
+    return (m * x) + b
 
 
 def shoulder_callback(status):

@@ -7,8 +7,8 @@ static double rightMotorOutput = 0.0;
 
 void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
-    double moveValue = msg->linear.x;
-    double rotateValue = msg->angular.z;
+    double moveValue = msg->linear.x/0.6;
+    double rotateValue = msg->angular.z/0.4;
     if (moveValue > 0.0) {
         if (rotateValue > 0.0) {
             leftMotorOutput = moveValue - rotateValue;

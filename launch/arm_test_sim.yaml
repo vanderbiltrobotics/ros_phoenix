@@ -11,6 +11,6 @@ talons:
         pot: True
     wrist:
         id: 16
-        pot_low: -265
-        pot_high: -668
+        pot_low: -668
+        pot_high: -265
         pot: True

@@ -143,7 +143,7 @@ void FakeTalonNode::update()
     double diff = pot_high - pot_low;
     ros::Time cur = ros::Time::now();
     double dTime = (cur - lastPosUpdate).toSec();
-    status.position = _lastPosition + ((diff > 0 ? 1 : -1) * this->_output * dTime * 20);
+    status.position = _lastPosition + ((diff > 0 ? 1 : -1) * this->_output * dTime * 60);
     lastPosUpdate = cur;
     double trueHigh = (diff > 0 ? pot_high : pot_low);
     double trueLow = (diff > 0 ? pot_low : pot_high);

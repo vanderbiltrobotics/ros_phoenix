@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import rospy
 from ros_phoenix.msg import MotorStatus
-from std_msgs.msg import Float32
+from std_msgs.msg import Float64
 
 # LOW = retracted
 # HIGH = out
@@ -9,62 +9,74 @@ from std_msgs.msg import Float32
 shoulder_pub = None
 elbow_pub = None
 wrist_pub = None
+shoulder_vel_pub = None
+elbow_vel_pub = None
+wrist_vel_pub = None
 
-def interpolate(lowX, lowY, highX, highY, x):
-    changeX = highX - lowX
-    changeY = highY - lowY
 
-    slope = float(changeX)/float(changeY)
-
-    cons = (-1 * (slope * lowX)) + lowY
-
-    return (slope * calculateX) + cons
+def interpolate(x1, y1, x2, y2, x):
+    assert (x1 - 15) <= x <= (x2 + 15) or (x2 - 15) <= x <= (x1 + 15)
+    m = ((y2 - y1) / (x2 - x1))
+    b = y1 - (m * x1)
+    
+    return (m * x) + b
 
 
 def shoulder_callback(status):
     global shoulder_pub
-    POT_LOW = 294
-    POT_HIGH = 13
+    global shoulder_vel_pub
+    POT_LOW = 93
+    POT_HIGH = 392
     ANGLE_LOW = 2
     ANGLE_HIGH = 3.222
 
-    shoulder_pub.publish(interpolate(POT_LOW, POT_HIGH, 0, ANGLE_HIGH, status.position))
+    shoulder_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, -status.position))
+    shoulder_vel_pub.publish(status.velocity * abs((ANGLE_HIGH - ANGLE_LOW) / (POT_HIGH - POT_LOW)))
 
 
 def elbow_callback(status):
     global elbow_pub
-    POT_LOW = 1023
-    POT_HIGH = 747
+    global elbow_vel_pub
+    POT_LOW = 737
+    POT_HIGH = 1023
     ANGLE_LOW = -0.663
     ANGLE_HIGH = 0.506
 
-    elbow_pub.publish(interpolate(POT_LOW, POT_HIGH, 0, ANGLE_HIGH, status.position))
+    elbow_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, status.position))
+    elbow_vel_pub.publish(status.velocity * abs((ANGLE_HIGH - ANGLE_LOW) / (POT_HIGH - POT_LOW)))
 
 
 # angles from urdf
 def wrist_callback(status):
     global wrist_pub
-    POT_LOW = 659
-    POT_HIGH = 258
-    ANGLE_LOW = -0.89
-    ANGLE_HIGH = 0.174
+    global wrist_vel_pub
+    POT_LOW = 265
+    POT_HIGH = 668
+    ANGLE_LOW = 0.174
+    ANGLE_HIGH = -0.89
 
-    wrist_pub.publish(interpolate(POT_LOW, POT_HIGH, 0, ANGLE_HIGH, status.position))
+    wrist_pub.publish(interpolate(POT_LOW, ANGLE_LOW, POT_HIGH, ANGLE_HIGH, -status.position))
+    wrist_vel_pub.publish(status.velocity * abs((ANGLE_HIGH - ANGLE_LOW) / (POT_HIGH - POT_LOW)))
 
 
 def main():
-    global shoulder_pub, elbow_pub, wrist_pub
+    global shoulder_pub, elbow_pub, wrist_pub, shoulder_vel_pub, elbow_vel_pub, wrist_vel_pub
     rospy.init_node("potentiometers")
+
+    shoulder_pub = rospy.Publisher("/shoulder/angle", Float64, queue_size=10)
+    elbow_pub = rospy.Publisher("/elbow/angle", Float64, queue_size=10)
+    wrist_pub = rospy.Publisher("/wrist/angle", Float64, queue_size=10)
+
+    shoulder_vel_pub = rospy.Publisher("/shoulder/vel", Float64, queue_size=10)
+    elbow_vel_pub = rospy.Publisher("/elbow/vel", Float64, queue_size=10)
+    wrist_vel_pub = rospy.Publisher("/wrist/vel", Float64, queue_size=10)
 
     rospy.Subscriber("/shoulder/status", MotorStatus, shoulder_callback)
     rospy.Subscriber("/elbow/status", MotorStatus, elbow_callback)
     rospy.Subscriber("/wrist/status", MotorStatus, wrist_callback)
 
-    shoulder_pub = rospy.Publisher("/shoulder/angle", Float32, queue_size = 10)
-    elbow_pub = rospy.Publisher("/elbow/angle", Float32, queue_size = 10)
-    wrist_pub = rospy.Publisher("/wrist/angle", Float32, queue_size = 10)
-
     rospy.spin()
+
 
 if __name__ == "__main__":
     main()

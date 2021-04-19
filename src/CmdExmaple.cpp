@@ -25,6 +25,7 @@ void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
             rotateValue=rotateValue/std::abs(rotateValue);
         }
     }
+
     if (moveValue > 0.0) {
         if (rotateValue > 0.0) {
             leftMotorOutput = moveValue - rotateValue;
@@ -49,7 +50,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "motor_controller");
     ros::NodeHandle nh;
-    ros::Subscriber sub = nh.subscribe("cmd_vel", 1, cmdCallback);
+    ros::Subscriber sub = nh.subscribe("real_cmd_vel", 1, cmdCallback);
 
     ros::Publisher fl = nh.advertise<ros_phoenix::MotorControl>("/front_left/set", 1);
     ros::Publisher fr = nh.advertise<ros_phoenix::MotorControl>("/front_right/set", 1);

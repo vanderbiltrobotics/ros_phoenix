@@ -10,7 +10,7 @@ void cmdCallback(const ros_phoenix::ArmVelocities::ConstPtr& msg){
     shoulderOutput = msg->shoulder_velocity;
     elbowOutput = msg->elbow_velocity;
     wristOutput = msg->wrist_velocity;
-    ROS_INFO("Shoulder=%f Elbow=%f Wrist=%f", shoulderOutput, elbowOutput, wristOutput);
+    //ROS_INFO("Shoulder=%f Elbow=%f Wrist=%f", shoulderOutput, elbowOutput, wristOutput);
 }
 
 int main(int argc, char** argv){

@@ -216,6 +216,12 @@ target_link_libraries(fake_ros_phoenix_node
 ## Install ##
 #############
 
+## Install python scripts
+catkin_install_python(PROGRAMS
+  scripts/box_testing.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 ## Install node executables
 install(TARGETS fake_ros_phoenix_node ros_phoenix_node ros_phoenix_fd_teleop ros_phoenix_cmd_example ros_phoenix_arm_command ros_phoenix_deposition_command
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

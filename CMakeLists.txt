@@ -49,7 +49,6 @@ macro(add_ctre_library LIB_NAME URL_NAME)
     COMMAND ${CMAKE_COMMAND} -E tar xzf ${FILE_DEST}
     COMMAND ${CMAKE_COMMAND} -E tar xzf ${HEADER_DEST}
     WORKING_DIRECTORY ${LIB_DIR}
-    DEPENDS ${FILE_DEST}
     COMMENT "Unpacking ${LIB_NAME}"
     VERBATIM)
 

@@ -45,12 +45,12 @@ macro(add_ctre_library LIB_NAME URL_NAME)
     # Create a target for extracing the zip files
     add_custom_target(${LIB_NAME}-unzip DEPENDS ${LIB_DEST})
     add_custom_command(OUTPUT ${LIB_DEST} PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E remove -f ${CMAKE_CURRENT_BINARY_DIR}/ctre/linux/${CTRE_ARCH}/static/lib${LIB_NAME}.a
         COMMAND ${CMAKE_COMMAND} -E tar xzf ${FILE_DEST}
         COMMAND ${CMAKE_COMMAND} -E tar xzf ${HEADER_DEST}
         WORKING_DIRECTORY ${LIB_DIR}
         COMMENT "Unpacking ${LIB_NAME}"
-        VERBATIM)
+        VERBATIM
+    )
 
     # Add library
     add_library(${LIB_NAME} STATIC IMPORTED)

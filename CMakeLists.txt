@@ -117,6 +117,7 @@ add_message_files(
    FILES
    MotorControl.msg
    MotorStatus.msg
+   ArmVelocities.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -198,12 +199,26 @@ include_directories(
 add_executable(ros_phoenix_cmd_example ${PROJECT_SOURCE_DIR}/src/CmdExmaple.cpp)
 add_dependencies(ros_phoenix_cmd_example ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(ros_phoenix_fd_teleop ${PROJECT_SOURCE_DIR}/src/FDTeleop.cpp)
+add_dependencies(ros_phoenix_fd_teleop ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(ros_phoenix_arm_command ${PROJECT_SOURCE_DIR}/src/ArmCommand.cpp)
+add_dependencies(ros_phoenix_arm_command ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(ros_phoenix_deposition_command ${PROJECT_SOURCE_DIR}/src/DepositionCommand.cpp)
+add_dependencies(ros_phoenix_deposition_command ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(ros_phoenix_node
         ${PROJECT_SOURCE_DIR}/src/TalonNode.cpp
         ${PROJECT_SOURCE_DIR}/src/MotorControl.cpp
         )
 add_dependencies(ros_phoenix_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(fake_ros_phoenix_node
+        ${PROJECT_SOURCE_DIR}/src/FakeTalonNode.cpp
+        ${PROJECT_SOURCE_DIR}/src/FakeMotorControl.cpp
+        )
+add_dependencies(fake_ros_phoenix_node ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -215,7 +230,27 @@ target_link_libraries(ros_phoenix_cmd_example
         Threads::Threads
         ${PHOENIX_LIBRARIES}
         )
+target_link_libraries(ros_phoenix_fd_teleop
+        ${catkin_LIBRARIES}
+        Threads::Threads
+        ${PHOENIX_LIBRARIES}
+        )
+target_link_libraries(ros_phoenix_arm_command
+        ${catkin_LIBRARIES}
+        Threads::Threads
+        ${PHOENIX_LIBRARIES}
+        )
+target_link_libraries(ros_phoenix_deposition_command
+        ${catkin_LIBRARIES}
+        Threads::Threads
+        ${PHOENIX_LIBRARIES}
+        )
 target_link_libraries(ros_phoenix_node
+        ${catkin_LIBRARIES}
+        Threads::Threads
+        ${PHOENIX_LIBRARIES}
+        )
+target_link_libraries(fake_ros_phoenix_node
         ${catkin_LIBRARIES}
         Threads::Threads
         ${PHOENIX_LIBRARIES}
@@ -225,8 +260,14 @@ target_link_libraries(ros_phoenix_node
 ## Install ##
 #############
 
+## Install python scripts
+catkin_install_python(PROGRAMS
+  scripts/box_testing.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 ## Install node executables
-install(TARGETS ros_phoenix_node ros_phoenix_cmd_example
+install(TARGETS fake_ros_phoenix_node ros_phoenix_node ros_phoenix_fd_teleop ros_phoenix_cmd_example ros_phoenix_arm_command ros_phoenix_deposition_command
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -1,0 +1,16 @@
+talons:
+    shoulder:
+        id: 17
+        pot_low: -93
+        pot_high: -392
+        pot: True
+    elbow:
+        id: 14
+        pot_low: 737
+        pot_high: 1023
+        pot: True
+    wrist:
+        id: 16
+        pot_low: -668
+        pot_high: -265
+        pot: True

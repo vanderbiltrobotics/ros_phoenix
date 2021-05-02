@@ -1,0 +1,38 @@
+talons:
+    # PID values from full_system.yaml
+    front_left:
+        id: TODO
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: False
+    front_right:
+        id: TODO
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: True
+    back_left:
+        id: TODO
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: False
+    back_right:
+        id: TODO
+        P: 3.0
+        I: 0.015
+        D: 175.0
+        inverted: True
+    shoulder:
+        id: 17
+        pot: True
+    elbow:
+        id: 14
+        pot: True
+    wrist:
+        id: 16
+        pot: True
+    deposition:
+        id: TODO
+        

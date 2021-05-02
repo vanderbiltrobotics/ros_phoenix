@@ -1,31 +1,15 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
 #include "ros_phoenix/MotorControl.h"
-#include <cmath> 
+#include "std_msgs/Float64.h"
 
 static double leftMotorOutput = 0.0;
 static double rightMotorOutput = 0.0;
-static double MAX_LINEAR_SPEED=0.6;
-static double MAX_ANGULAR_SPEED=0.4;
-static double RADIUS=1;
 
 void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
-    //double moveValue = msg->linear.x;
-    //double rotateValue = msg->angular.z;
-
-    double moveValue = msg->linear.x/MAX_LINEAR_SPEED;
-    double rotateValue = RADIUS*(msg->angular.z/MAX_ANGULAR_SPEED);
-    if(std::abs(moveValue)>1 || std::abs(rotateValue)>1) {
-        if(std::abs(moveValue)>std::abs(rotateValue)) {
-            moveValue=moveValue/std::abs(moveValue);
-            rotateValue=rotateValue/std::abs(moveValue);
-        } else {
-            moveValue=moveValue/std::abs(rotateValue);
-            rotateValue=rotateValue/std::abs(rotateValue);
-        }
-    }
-
+    double moveValue = msg->linear.x;
+    double rotateValue = msg->angular.z;
     if (moveValue > 0.0) {
         if (rotateValue > 0.0) {
             leftMotorOutput = moveValue - rotateValue;
@@ -46,11 +30,22 @@ void cmdCallback(const geometry_msgs::Twist::ConstPtr& msg)
     ROS_INFO("Move=%f Rotate=%f", moveValue, rotateValue);
 }
 
+void leftCallback(const std_msgs::Float64::ConstPtr& msg)
+{
+    leftMotorOutput=msg->data;
+}
+
+void rightCallback(const std_msgs::Float64::ConstPtr& msg)
+{
+    rightMotorOutput=msg->data;
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "motor_controller");
     ros::NodeHandle nh;
-    ros::Subscriber sub = nh.subscribe("cmd_vel", 1, cmdCallback);
+    ros::Subscriber left = nh.subscribe("left_speed",1,leftCallback);
+    ros::Subscriber right = nh.subscribe("right_speed",1,rightCallback);
 
     ros::Publisher fl = nh.advertise<ros_phoenix::MotorControl>("/front_left/set", 1);
     ros::Publisher fr = nh.advertise<ros_phoenix::MotorControl>("/front_right/set", 1);

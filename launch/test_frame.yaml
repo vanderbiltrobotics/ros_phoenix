@@ -1,0 +1,13 @@
+talons:
+    front_left:
+        id: 15
+        inverted: True
+    front_right:
+        id: 18
+        inverted: False
+    back_left:
+        id: 10
+        inverted: True
+    back_right:
+        id: 19
+        inverted: False

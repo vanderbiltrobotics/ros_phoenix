@@ -7,10 +7,13 @@ add_compile_options(-std=c++17)
 # Set CTRE_ARCH
 if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf")
     set(CTRE_ARCH "raspberry")
+    set(CTRE_API_NAME "raspberry")
 elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
     set(CTRE_ARCH "jetsontx")
+    set(CTRE_API_NAME "aarch64bionic")
 elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "x86_64-linux-gnu")
     set(CTRE_ARCH "x86-64")
+    set(CTRE_API_NAME "x86-64")
 else()
     message(FATAL_ERROR "Unsupported architecture for CTRE Phoenix: ${CMAKE_LIBRARY_ARCHITECTURE}")
 endif()
@@ -18,9 +21,9 @@ endif()
 set(CTRE_VERSION "5.19.4")
 
 # Macro for downloading CTRE Libraries
-macro(add_ctre_library LIB_NAME URL_NAME)
+macro(add_ctre_library LIB_NAME URL_NAME DIR_NAME)
     SET(LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/ctre/${CTRE_VERSION}/${URL_NAME}")
-    SET(LIB_DEST "${LIB_DIR}/linux/${CTRE_ARCH}/static/lib${LIB_NAME}.a")
+    SET(LIB_DEST "${LIB_DIR}/linux/${DIR_NAME}/static/lib${LIB_NAME}.a")
     file(MAKE_DIRECTORY ${LIB_DIR})
     file(MAKE_DIRECTORY ${LIB_DIR}/ctre)
 
@@ -172,12 +175,12 @@ catkin_package(
 )
 
 # Download the CTRE libraries
-add_ctre_library(CTRE_Phoenix                   api-cpp)
-add_ctre_library(CTRE_PhoenixCCI                cci)
-add_ctre_library(CTRE_PhoenixDiagnostics        diagnostics)
-add_ctre_library(CTRE_PhoenixPlatform_socketcan platform-socketcan)
-add_ctre_library(CTRE_PhoenixCanutils           canutils)
-add_ctre_library(CTRE_PhoenixCore               core)
+add_ctre_library(CTRE_Phoenix                   api-cpp ${CTRE_API_NAME})
+add_ctre_library(CTRE_PhoenixCCI                cci ${CTRE_ARCH})
+add_ctre_library(CTRE_PhoenixDiagnostics        diagnostics ${CTRE_ARCH})
+add_ctre_library(CTRE_PhoenixPlatform_socketcan platform-socketcan ${CTRE_ARCH})
+add_ctre_library(CTRE_PhoenixCanutils           canutils ${CTRE_ARCH})
+add_ctre_library(CTRE_PhoenixCore               core ${CTRE_ARCH})
 
 ###########
 ## Build ##

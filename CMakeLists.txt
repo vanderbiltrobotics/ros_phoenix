@@ -28,7 +28,7 @@ macro(add_ctre_library LIB_NAME URL_NAME DIR_NAME)
     file(MAKE_DIRECTORY ${LIB_DIR}/ctre)
 
     # Download the library
-    set(FILE_NAME "${URL_NAME}-${CTRE_VERSION}-linux${API_NAME}static.zip")
+    set(FILE_NAME "${URL_NAME}-${CTRE_VERSION}-linux${DIR_NAME}static.zip")
     set(FILE_URL "http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/${URL_NAME}/${CTRE_VERSION}/${FILE_NAME}")
     set(FILE_DEST "${LIB_DIR}/${FILE_NAME}")
     if(NOT EXISTS ${FILE_DEST})

@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
     ros::Rate loop_rate(50);
     while (ros::ok()) {
-        ctre::phoenix::unmanaged::FeedEnable(100);
+        ctre::phoenix::unmanaged::Unmanaged::FeedEnable(100);
 
         // There should be a better way of doing this
         std::for_each(talons.begin(), talons.end(), [](std::unique_ptr<FakeTalonNode>& talon) { talon->update(); });

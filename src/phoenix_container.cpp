@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 {
     // Start Phoenix diagnostic server in background
     ctre::phoenix::platform::can::SetCANInterface("can0");
-    c_SetPhoenixDiagnosticsStartTime(1);
+    c_SetPhoenixDiagnosticsStartTime(-1);
 
     rclcpp::init(argc, argv);
     auto exec = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();

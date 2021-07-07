@@ -1,16 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(ros_phoenix)
 
-# Verify Phoenix git submodule
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include)
-   message(INFO "Succesfully loaded CTRE Phoenix Library")
-else()
-  message(FATAL_ERROR
-    "Failed to find CTRE Phoenix Library! "
-    "Do you need to initialize the submodule?: git submodule update --init --recursive"
-  )
-endif()
-
 # Set CTRE_ARCH
 if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf")
   set(CTRE_ARCH "raspberry")
@@ -21,6 +11,63 @@ elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "x86_64-linux-gnu")
 else()
   message(FATAL_ERROR "Unsupported architecture for CTRE Phoenix")
 endif()
+
+set(CTRE_VERSION "5.18.3")
+
+#Macro for downloading CTRE Libraries
+macro(add_ctre_library LIB_NAME URL_NAME)
+    SET(LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/ctre/${CTRE_VERSION}/${URL_NAME}")
+    SET(LIB_DEST "${LIB_DIR}/linux/${CTRE_ARCH}/static/lib${LIB_NAME}.a")
+    file(MAKE_DIRECTORY ${LIB_DIR})
+    file(MAKE_DIRECTORY ${LIB_DIR}/ctre)
+
+    # Download the library
+    set(FILE_NAME "${URL_NAME}-${CTRE_VERSION}-linux${CTRE_ARCH}static.zip")
+    set(FILE_URL "http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/${URL_NAME}/${CTRE_VERSION}/${FILE_NAME}")
+    set(FILE_DEST "${LIB_DIR}/${FILE_NAME}")
+    if(NOT EXISTS ${FILE_DEST})
+        message(STATUS "Downloading ${LIB_NAME} from ${FILE_URL}")
+        file(DOWNLOAD ${FILE_URL} ${FILE_DEST})
+    endif()
+
+    # Download the headers
+    SET(HEADER_NAME "${URL_NAME}-${CTRE_VERSION}-headers.zip")
+    set(HEADER_URL "http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/${URL_NAME}/${CTRE_VERSION}/${HEADER_NAME}")
+    set(HEADER_DEST "${LIB_DIR}/${HEADER_NAME}")
+    if(NOT EXISTS ${HEADER_DEST})
+        message(STATUS "Downloading headers for ${LIB_NAME} from ${FILE_URL}")
+        file(DOWNLOAD ${HEADER_URL} ${HEADER_DEST})
+    endif()
+
+    # Create a target for extracing the zip files
+    add_custom_target(${LIB_NAME}-unzip DEPENDS ${LIB_DEST})
+    add_custom_command(OUTPUT ${LIB_DEST} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E tar xzf ${FILE_DEST}
+        COMMAND ${CMAKE_COMMAND} -E tar xzf ${HEADER_DEST}
+        WORKING_DIRECTORY ${LIB_DIR}
+        COMMENT "Unpacking ${LIB_NAME}"
+        VERBATIM
+    )
+
+    # Add library
+    include_directories(${LIB_DIR})
+    add_library(${LIB_NAME} STATIC IMPORTED)
+    add_dependencies(${LIB_NAME} ${LIB_NAME}-unzip)
+    set_target_properties(${LIB_NAME} PROPERTIES
+        IMPORTED_LOCATION ${LIB_DEST}
+        INTERFACE_INCLUDE_DIRECTORIES ${LIB_DIR}
+    )
+
+    # Mark files for installation by catkin
+    install (
+        FILES ${LIB_DEST}
+        DESTINATION share/${PROJECT_NAME}
+    )
+    install (
+        DIRECTORY ${LIB_DIR}/ctre
+        DESTINATION share/${PROJECT_NAME}/ctre
+    )
+endmacro()
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -63,16 +110,14 @@ set(PHOENIX_LIBRARIES CTRE_Phoenix
                       CTRE_PhoenixCore
 )
 
-# Create a target for each Phoenix library
-foreach(LIBRARY ${PHOENIX_LIBRARIES})
-  add_library(${LIBRARY} STATIC IMPORTED)
-  set(LIBRARY_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/lib/${CTRE_ARCH}/lib${LIBRARY}.a)
-  SET_TARGET_PROPERTIES(${LIBRARY} PROPERTIES IMPORTED_LOCATION ${LIBRARY_LOCATION})
-  install (
-    FILES ${LIBRARY_LOCATION}
-    DESTINATION lib
-  )
-endforeach()
+
+# Download the CTRE libraries
+add_ctre_library(CTRE_Phoenix                   api-cpp)
+add_ctre_library(CTRE_PhoenixCCI                cci)
+add_ctre_library(CTRE_PhoenixDiagnostics        diagnostics)
+add_ctre_library(CTRE_PhoenixPlatform_socketcan platform-socketcan)
+add_ctre_library(CTRE_PhoenixCanutils           canutils)
+add_ctre_library(CTRE_PhoenixCore               core)
 
 add_library(phoenix_components SHARED
    "src/victor_component.cpp"

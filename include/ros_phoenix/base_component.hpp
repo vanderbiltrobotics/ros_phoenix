@@ -212,7 +212,8 @@ namespace ros_phoenix
 
         void onTimer()
         {
-            ctre::phoenix::unmanaged::FeedEnable(this->watchdog_ms_);
+            // CTRE_Phoenix  5.19.4- Unmanaged is a class in the unmanaged namespace
+            ctre::phoenix::unmanaged::Unmanaged::FeedEnable(this->watchdog_ms_);
             if (!this->configured_)
                 return;
 

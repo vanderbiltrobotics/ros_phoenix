@@ -14,7 +14,7 @@ endif()
 
 set(CTRE_VERSION "5.18.3")
 
-#Macro for downloading CTRE Libraries
+# Macro for downloading CTRE Libraries
 macro(add_ctre_library LIB_NAME URL_NAME)
     SET(LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/ctre/${CTRE_VERSION}/${URL_NAME}")
     SET(LIB_DEST "${LIB_DIR}/linux/${CTRE_ARCH}/static/lib${LIB_NAME}.a")

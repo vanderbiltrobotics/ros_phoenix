@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[])
 {
-    // Start Phoenix diagnostic server in background
+    // Stops the launch of the Phoenix diagnostic server so only one instance is started
     ctre::phoenix::platform::can::SetCANInterface("can0");
     c_SetPhoenixDiagnosticsStartTime(-1);
 

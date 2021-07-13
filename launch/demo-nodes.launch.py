@@ -3,7 +3,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    """Generate launch description with multiple nodes."""
+    """Launches talons for basic 4-wheel drive."""
     return LaunchDescription(
         [
             Node(

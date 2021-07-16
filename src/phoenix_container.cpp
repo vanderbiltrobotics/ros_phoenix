@@ -9,9 +9,8 @@
 
 int main(int argc, char *argv[])
 {
-    // Stops the launch of the Phoenix diagnostic server so only one instance is started
     ctre::phoenix::platform::can::SetCANInterface("can0");
-    c_SetPhoenixDiagnosticsStartTime(-1);
+    c_SetPhoenixDiagnosticsStartTime(1);
 
     rclcpp::init(argc, argv);
     auto exec = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();

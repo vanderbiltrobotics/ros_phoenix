@@ -6,21 +6,18 @@ This project contains a ROS2 package for interfacing with CTRE motor controllers
 ```
 $ cd <ros_ws>/src
 $ git clone https://github.com/vanderbiltrobotics/ros_phoenix
-```
-2. Initialize the git submodule
-```
 $ cd ros_phoenix
-$ git submodule update --init --recursive
+$ git checkout foxy
 ```
-3. Build the workspace and source the setup file
+2. Build the workspace and source the setup file
 ```
 $ cd <ros_ws>
-$ colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 $ source install/setup.bash
 ```
 
 ## Launch File Usage
-A launch file is the recommended way to create and configure multiple motor controllers. See [`launch/demo.launch.py`](https://github.com/vanderbiltrobotics/ros_phoenix/blob/master/launch/demo.launch.py) for an example. Alternatively, components can be created from the CLI.
+A launch file is the recommended way to create and configure multiple motor controllers. See [`launch/demo.launch.py`](https://github.com/vanderbiltrobotics/ros_phoenix/blob/foxy/launch/demo.launch.py) for an example. Alternatively, components can be created from the CLI.
 
 ## CLI Usage
 This package uses ROS2 components to compose nodes into a single process. See the [ROS2 composition tutorial](https://index.ros.org/doc/ros2/Tutorials/Composition/) for a full guide to composition.
@@ -46,7 +43,7 @@ $ ros2 component load /PhoenixContainer ros_phoenix ros_phoenix::TalonSRX --node
 - Publishes status information about the motor controller
 
 ### Subscribed Topics
-`<node_name/set` (ros_phoenix/MotorControl)
+`<node_name>/set` (ros_phoenix/MotorControl)
 - Sets the control mode and output of the motor controller
 
 ### Parameters

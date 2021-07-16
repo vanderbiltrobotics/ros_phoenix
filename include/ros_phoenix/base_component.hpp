@@ -28,10 +28,6 @@ namespace ros_phoenix
         explicit BaseComponent(const rclcpp::NodeOptions &options)
             : Node("motor", options)
         {
-            this->declare_parameter<std::string>("interface", "can0");
-            ctre::phoenix::platform::can::SetCANInterface(this->get_parameter("interface").as_string().c_str());
-            c_SetPhoenixDiagnosticsStartTime(-1); // disable diag server
-
             this->declare_parameter<int>("id", 0);
             this->declare_parameter<int>("period_ms", 20);
             this->declare_parameter<int>("watchdog_ms", 100);

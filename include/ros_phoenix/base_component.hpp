@@ -31,7 +31,7 @@ namespace ros_phoenix
             this->declare_parameter<int>("id", 0);
             this->declare_parameter<int>("period_ms", 20);
             this->declare_parameter<int>("watchdog_ms", 100);
-            this->declare_parameter<int>("follow", -1);
+            this->declare_parameter<int>("follow_id", -1);
             this->declare_parameter<int>("edges_per_rot", 4096); // Encoder edges per rotation (4096 is for built-in encoder)
             this->declare_parameter<bool>("invert", false);
             this->declare_parameter<bool>("invert_sensor", false);
@@ -48,6 +48,7 @@ namespace ros_phoenix
 
             this->period_ms_ = this->get_parameter("period_ms").as_int();
             this->watchdog_ms_ = this->get_parameter("watchdog_ms").as_int();
+            this->follow_id_ = this->get_parameter("follow_id").as_int();
 
             this->controller_ = std::make_shared<MotorController>(this->get_parameter("id").as_int());
 
@@ -106,7 +107,8 @@ namespace ros_phoenix
                 else if (param.get_name() == "period_ms" || !this->timer_)
                 {
                     this->period_ms_ = param.as_int();
-                    timer_ = this->create_wall_timer(
+                    this->timer_.reset();
+                    this->timer_ = this->create_wall_timer(
                         std::chrono::milliseconds(this->period_ms_),
                         std::bind(&BaseComponent::onTimer, this));
                 }
@@ -188,9 +190,9 @@ namespace ros_phoenix
                 this->controller_->SetSensorPhase(this->get_parameter("invert_sensor").as_bool());
                 this->controller_->SelectProfileSlot(0, 0);
 
-                int follow = this->get_parameter("follow").as_int();
-                if (follow > 0)
-                    this->controller_->Set(ControlMode::Follower, follow);
+                this->follow_id_ = this->get_parameter("follow_id").as_int();
+                if (this->follow_id_ >= 0)
+                    this->controller_->Set(ControlMode::Follower, this->follow_id_);
 
                 RCLCPP_INFO(this->get_logger(), "Successfully configured Motor Controller");
                 this->configured_ = true;
@@ -213,7 +215,7 @@ namespace ros_phoenix
             if (!this->configured_)
                 return;
 
-            if (this->now() - this->last_update_ > rclcpp::Duration(this->watchdog_ms_ * 1000000))
+            if (this->follow_id_ < 0 && this->now() - this->last_update_ > rclcpp::Duration(this->watchdog_ms_ * 1000000))
             {
                 this->controller_->Set(ControlMode::PercentOutput, 0.0);
                 if (!this->watchdog_warned_)
@@ -242,6 +244,7 @@ namespace ros_phoenix
         int period_ms_;
         int watchdog_ms_;
         bool watchdog_warned_ = false;
+        int follow_id_;
 
         std::shared_ptr<MotorController> controller_;
 

@@ -50,7 +50,7 @@ $ ros2 component load /PhoenixContainer ros_phoenix ros_phoenix::TalonSRX --node
 - `id` (0): Device CAN bus ID
 - `period_ms` (20): Period in milliseconds of status updates
 - `watchdog_ms` (100): Watchdog timer. Must be greater than period_ms!
-- `follow` (-1): If greater than zero, the ID of another device to follow
+- `follow_id` (-1): If >= to zero, the ID of another device to follow
 - `edges_per_rot` (4096): Encoder edges per rotation
 - `invert` (false): Invert motor output
 - `invert_sensor` (false): Invert sensor direction

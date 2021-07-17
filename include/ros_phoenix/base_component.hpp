@@ -243,7 +243,7 @@ namespace ros_phoenix
     private:
         int period_ms_;
         int watchdog_ms_;
-        bool watchdog_warned_ = false;
+        bool watchdog_warned_ = true;
         int follow_id_;
 
         std::shared_ptr<MotorController> controller_;

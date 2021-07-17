@@ -1,6 +1,8 @@
 #ifndef ROS_PHOENIX_BASE_COMPONENT
 #define ROS_PHOENIX_BASE_COMPONENT
 
+#include "ros_phoenix/phoenix_manager.hpp"
+
 #include "ros_phoenix/msg/motor_control.hpp"
 #include "ros_phoenix/msg/motor_status.hpp"
 
@@ -10,11 +12,9 @@
 
 #define Phoenix_No_WPI // remove WPI dependencies
 #include "ctre/Phoenix.h"
-#include "ctre/phoenix/cci/Unmanaged_CCI.h"
-#include "ctre/phoenix/platform/Platform.h"
-#include "ctre/phoenix/unmanaged/Unmanaged.h"
 
 #include <chrono>
+#include <stdexcept>
 
 using namespace rclcpp;
 using namespace std::chrono_literals;
@@ -28,6 +28,12 @@ namespace ros_phoenix
         explicit BaseComponent(const rclcpp::NodeOptions &options)
             : Node("motor", options)
         {
+            // Detect if component run outside of a phoenix container
+            if (!PhoenixManager::instanceCreated()) {
+                RCLCPP_ERROR(this->get_logger(), "Phoenix components must be run inside phoenix container!");
+                throw new std::runtime_error("Phoenix components must be run inside phoenix container!");
+            }
+
             this->declare_parameter<int>("id", 0);
             this->declare_parameter<int>("period_ms", 20);
             this->declare_parameter<int>("watchdog_ms", 100);
@@ -199,8 +205,6 @@ namespace ros_phoenix
 
         void onTimer()
         {
-            // CTRE_Phoenix  5.19.4- Unmanaged is a class in the unmanaged namespace
-            ctre::phoenix::unmanaged::Unmanaged::FeedEnable(this->watchdog_ms_);
             if (!this->configured_)
                 return;
 

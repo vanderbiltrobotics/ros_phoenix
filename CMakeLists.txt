@@ -73,6 +73,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # find dependencies
+find_package(Threads REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -108,17 +109,21 @@ add_ctre_library(CTRE_PhoenixCore               core)
 
 # Create shared library with components and CTRE libraries
 add_library(phoenix_components SHARED
-   "src/victor_component.cpp"
-   "src/talon_component.cpp"
-   "src/falcon_component.cpp")
+   "src/phoenix_components.cpp"
+   "src/phoenix_manager.cpp")
 ament_target_dependencies(phoenix_components
   "rclcpp"
   "rclcpp_components"
   "rcutils")
+target_link_libraries(phoenix_components
+  ${PHOENIX_LIBRARIES}
+  Threads::Threads
+  ros_phoenix__rosidl_typesupport_cpp)
+
+# Register components
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::VictorSPX")
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonSRX")
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonFX")
-target_link_libraries(phoenix_components ${PHOENIX_LIBRARIES} ros_phoenix__rosidl_typesupport_cpp)
 
 # Create executable for phoenix_container which links phoenix_components
 add_executable(phoenix_container "src/phoenix_container.cpp")

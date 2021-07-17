@@ -52,29 +52,27 @@ namespace ros_phoenix
 
             this->controller_ = std::make_shared<MotorController>(this->get_parameter("id").as_int());
 
-            this->last_update_ = this->now();
-            this->timer_ = timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(this->period_ms_),
-                std::bind(&BaseComponent::onTimer, this));
-
-            this->set_on_parameters_set_callback(std::bind(&BaseComponent::reconfigure, this, std::placeholders::_1));
-            this->reconfigure({});
-
             std::string name(this->get_name());
-
             this->pub_ = this->create_publisher<ros_phoenix::msg::MotorStatus>(name + "/status", 1);
-
             this->sub_ = this->create_subscription<ros_phoenix::msg::MotorControl>(name + "/set", 1,
                                                                                    std::bind(&BaseComponent::set, this, std::placeholders::_1));
+
+            this->reconfigure({});
+            this->callback_handle_ = this->add_on_set_parameters_callback(std::bind(&BaseComponent::reconfigure, this, std::placeholders::_1));
+
+            this->last_update_ = this->now();
+            this->timer_ = this->create_wall_timer(
+                std::chrono::milliseconds(this->period_ms_),
+                std::bind(&BaseComponent::onTimer, this));
         }
 
         ~BaseComponent()
         {
-            std::lock_guard<std::mutex> guard(this->config_mutex_);
+            std::unique_lock<std::mutex> lock(this->config_mutex_);
             if (this->config_thread_)
             {
                 this->configured_ = true; // Signal config thread to stop
-                guard.~lock_guard();
+                lock.unlock();
                 this->config_thread_->join();
             }
         }
@@ -149,7 +147,7 @@ namespace ros_phoenix
                 {
                     if (!warned)
                     {
-                        RCLCPP_WARN(this->get_logger(), "Motor controller has not been seen and can not be configured!");
+                        RCLCPP_WARN(this->get_logger(), "Motor controller has not been seen and cannot be configured!");
                         warned = true;
                     }
                     continue;
@@ -199,15 +197,6 @@ namespace ros_phoenix
             }
         }
 
-        void configure_current_limit(Configuration &config) {}
-
-        void configure_sensor() {}
-
-        double get_output_current()
-        {
-            return 0; // Return 0 for devices which don't support current monitoring
-        }
-
         void onTimer()
         {
             // CTRE_Phoenix  5.19.4- Unmanaged is a class in the unmanaged namespace
@@ -240,6 +229,13 @@ namespace ros_phoenix
             this->pub_->publish(status);
         }
 
+        // Methods to be reimplemented by specific motor controllers with template specialization
+        void configure_current_limit(Configuration &config __attribute__((unused))) {};
+        void configure_sensor() {};
+        double get_output_current() {
+            return 0.0;
+        };
+
     private:
         int period_ms_;
         int watchdog_ms_;
@@ -254,6 +250,8 @@ namespace ros_phoenix
         rclcpp::Publisher<ros_phoenix::msg::MotorStatus>::SharedPtr pub_;
 
         rclcpp::Subscription<ros_phoenix::msg::MotorControl>::SharedPtr sub_;
+
+        OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
         //rclcpp::Service<tutorial_interfaces::srv::AddThreeInts>::SharedPtr reset_service_;
 

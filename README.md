@@ -1,5 +1,5 @@
 # ros_phoenix
-This project contains a ROS2 package for interfacing with CTRE motor controllers. It provides components for controlling Victor SPXs, Talon SRXs, and Falcon 500s. It uses the SocketCAN driver for communicating with these devices over a CAN bus. This version takes advantage of ROS2 features such as composition and improved parameter system. It supports Linux on x86-64 and 32/64-bit ARM. It has been tested to work on x86 laptops, Raspberry Pi 3/4, and Jetson Nano/Xavier.
+This project contains a ROS2 package for interfacing with CTRE motor controllers. It provides components for controlling Victor SPXs, Talon SRXs, and Falcon 500s. It uses the SocketCAN driver for communicating with these devices over a CAN bus. This version takes advantage of ROS2 features such as composition and improved parameter system. There is full support for changing parameters while the nodes are executing including convenient tuning of PID controllers. It supports Linux on x86-64 and 32/64-bit ARM.
 
 For ROS1 support see the [melodic](https://github.com/vanderbiltrobotics/ros_phoenix/tree/melodic) branch.
 
@@ -22,6 +22,9 @@ $ source install/setup.bash
 
 ## Launch File Usage
 A launch file is the recommended way to create and configure multiple motor controllers. See [`launch/demo.launch.py`](https://github.com/vanderbiltrobotics/ros_phoenix/blob/foxy/launch/demo.launch.py) for an example. Alternatively, components can be created from the CLI.
+
+### YAML parameter lists
+If trying to load parameters in a YAML file into a launch file using ComposableNodes beware of this [known issue in launch_ros](https://github.com/ros2/launch_ros/issues/156). It is still possible to load parameter files, but the file format is slightly different than standard ROS convention. See the issue for details.
 
 ## CLI Usage
 This package uses ROS2 components to compose nodes into a single process. See the [ROS2 composition tutorial](https://index.ros.org/doc/ros2/Tutorials/Composition/) for a full guide to composition.

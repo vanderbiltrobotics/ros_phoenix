@@ -1,6 +1,8 @@
 #ifndef ROS_PHOENIX_BASE_COMPONENT
 #define ROS_PHOENIX_BASE_COMPONENT
 
+#include "ros_phoenix/phoenix_manager.hpp"
+
 #include "ros_phoenix/msg/motor_control.hpp"
 #include "ros_phoenix/msg/motor_status.hpp"
 
@@ -10,11 +12,9 @@
 
 #define Phoenix_No_WPI // remove WPI dependencies
 #include "ctre/Phoenix.h"
-#include "ctre/phoenix/cci/Unmanaged_CCI.h"
-#include "ctre/phoenix/platform/Platform.h"
-#include "ctre/phoenix/unmanaged/Unmanaged.h"
 
 #include <chrono>
+#include <stdexcept>
 
 using namespace rclcpp;
 using namespace std::chrono_literals;
@@ -28,14 +28,16 @@ namespace ros_phoenix
         explicit BaseComponent(const rclcpp::NodeOptions &options)
             : Node("motor", options)
         {
-            this->declare_parameter<std::string>("interface", "can0");
-            ctre::phoenix::platform::can::SetCANInterface(this->get_parameter("interface").as_string().c_str());
-            c_SetPhoenixDiagnosticsStartTime(-1); // disable diag server
+            // Detect if component run outside of a phoenix container
+            if (!PhoenixManager::instanceCreated()) {
+                RCLCPP_ERROR(this->get_logger(), "Phoenix components must be run inside phoenix container!");
+                throw new std::runtime_error("Phoenix components must be run inside phoenix container!");
+            }
 
             this->declare_parameter<int>("id", 0);
             this->declare_parameter<int>("period_ms", 20);
             this->declare_parameter<int>("watchdog_ms", 100);
-            this->declare_parameter<int>("follow", -1);
+            this->declare_parameter<int>("follow_id", -1);
             this->declare_parameter<int>("edges_per_rot", 4096); // Encoder edges per rotation (4096 is for built-in encoder)
             this->declare_parameter<bool>("invert", false);
             this->declare_parameter<bool>("invert_sensor", false);
@@ -52,32 +54,31 @@ namespace ros_phoenix
 
             this->period_ms_ = this->get_parameter("period_ms").as_int();
             this->watchdog_ms_ = this->get_parameter("watchdog_ms").as_int();
+            this->follow_id_ = this->get_parameter("follow_id").as_int();
 
             this->controller_ = std::make_shared<MotorController>(this->get_parameter("id").as_int());
 
-            this->last_update_ = this->now();
-            this->timer_ = timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(this->period_ms_),
-                std::bind(&BaseComponent::onTimer, this));
-
-            this->set_on_parameters_set_callback(std::bind(&BaseComponent::reconfigure, this, std::placeholders::_1));
-            this->reconfigure({});
-
             std::string name(this->get_name());
-
             this->pub_ = this->create_publisher<ros_phoenix::msg::MotorStatus>(name + "/status", 1);
-
             this->sub_ = this->create_subscription<ros_phoenix::msg::MotorControl>(name + "/set", 1,
                                                                                    std::bind(&BaseComponent::set, this, std::placeholders::_1));
+
+            this->reconfigure({});
+            this->callback_handle_ = this->add_on_set_parameters_callback(std::bind(&BaseComponent::reconfigure, this, std::placeholders::_1));
+
+            this->last_update_ = this->now();
+            this->timer_ = this->create_wall_timer(
+                std::chrono::milliseconds(this->period_ms_),
+                std::bind(&BaseComponent::onTimer, this));
         }
 
         ~BaseComponent()
         {
-            std::lock_guard<std::mutex> guard(this->config_mutex_);
+            std::unique_lock<std::mutex> lock(this->config_mutex_);
             if (this->config_thread_)
             {
                 this->configured_ = true; // Signal config thread to stop
-                guard.~lock_guard();
+                lock.unlock();
                 this->config_thread_->join();
             }
         }
@@ -110,7 +111,8 @@ namespace ros_phoenix
                 else if (param.get_name() == "period_ms" || !this->timer_)
                 {
                     this->period_ms_ = param.as_int();
-                    timer_ = this->create_wall_timer(
+                    this->timer_.reset();
+                    this->timer_ = this->create_wall_timer(
                         std::chrono::milliseconds(this->period_ms_),
                         std::bind(&BaseComponent::onTimer, this));
                 }
@@ -151,7 +153,7 @@ namespace ros_phoenix
                 {
                     if (!warned)
                     {
-                        RCLCPP_WARN(this->get_logger(), "Motor controller has not been seen and can not be configured!");
+                        RCLCPP_WARN(this->get_logger(), "Motor controller has not been seen and cannot be configured!");
                         warned = true;
                     }
                     continue;
@@ -192,32 +194,21 @@ namespace ros_phoenix
                 this->controller_->SetSensorPhase(this->get_parameter("invert_sensor").as_bool());
                 this->controller_->SelectProfileSlot(0, 0);
 
-                int follow = this->get_parameter("follow").as_int();
-                if (follow > 0)
-                    this->controller_->Set(ControlMode::Follower, follow);
+                this->follow_id_ = this->get_parameter("follow_id").as_int();
+                if (this->follow_id_ >= 0)
+                    this->controller_->Set(ControlMode::Follower, this->follow_id_);
 
                 RCLCPP_INFO(this->get_logger(), "Successfully configured Motor Controller");
                 this->configured_ = true;
             }
         }
 
-        void configure_current_limit(Configuration &config) {}
-
-        void configure_sensor() {}
-
-        double get_output_current()
-        {
-            return 0; // Return 0 for devices which don't support current monitoring
-        }
-
         void onTimer()
         {
-            // CTRE_Phoenix  5.19.4- Unmanaged is a class in the unmanaged namespace
-            ctre::phoenix::unmanaged::Unmanaged::FeedEnable(this->watchdog_ms_);
             if (!this->configured_)
                 return;
 
-            if (this->now() - this->last_update_ > rclcpp::Duration(this->watchdog_ms_ * 1000000))
+            if (this->follow_id_ < 0 && this->now() - this->last_update_ > rclcpp::Duration(this->watchdog_ms_ * 1000000))
             {
                 this->controller_->Set(ControlMode::PercentOutput, 0.0);
                 if (!this->watchdog_warned_)
@@ -242,10 +233,18 @@ namespace ros_phoenix
             this->pub_->publish(status);
         }
 
+        // Methods to be reimplemented by specific motor controllers with template specialization
+        void configure_current_limit(Configuration &config __attribute__((unused))) {};
+        void configure_sensor() {};
+        double get_output_current() {
+            return 0.0;
+        };
+
     private:
         int period_ms_;
         int watchdog_ms_;
-        bool watchdog_warned_ = false;
+        bool watchdog_warned_ = true;
+        int follow_id_;
 
         std::shared_ptr<MotorController> controller_;
 
@@ -255,6 +254,8 @@ namespace ros_phoenix
         rclcpp::Publisher<ros_phoenix::msg::MotorStatus>::SharedPtr pub_;
 
         rclcpp::Subscription<ros_phoenix::msg::MotorControl>::SharedPtr sub_;
+
+        OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
         //rclcpp::Service<tutorial_interfaces::srv::AddThreeInts>::SharedPtr reset_service_;
 

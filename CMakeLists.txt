@@ -3,16 +3,16 @@ project(ros_phoenix)
 
 # Set CTRE_ARCH
 if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf")
-  set(CTRE_ARCH "raspberry")
+    set(CTRE_ARCH "raspbian")
 elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
-  set(CTRE_ARCH "jetsontx")
+    set(CTRE_ARCH "aarch64bionic")
 elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "x86_64-linux-gnu")
-  set(CTRE_ARCH "x86-64")
+    set(CTRE_ARCH "x86-64")
 else()
-  message(FATAL_ERROR "Unsupported architecture for CTRE Phoenix")
+    message(FATAL_ERROR "Unsupported architecture for CTRE Phoenix: ${CMAKE_LIBRARY_ARCHITECTURE}")
 endif()
 
-set(CTRE_VERSION "5.18.3")
+set(CTRE_VERSION "5.19.4")
 
 # Macro for downloading CTRE Libraries
 macro(add_ctre_library LIB_NAME URL_NAME)
@@ -50,22 +50,11 @@ macro(add_ctre_library LIB_NAME URL_NAME)
     )
 
     # Add library
-    include_directories(${LIB_DIR})
     add_library(${LIB_NAME} STATIC IMPORTED)
     add_dependencies(${LIB_NAME} ${LIB_NAME}-unzip)
     set_target_properties(${LIB_NAME} PROPERTIES
         IMPORTED_LOCATION ${LIB_DEST}
         INTERFACE_INCLUDE_DIRECTORIES ${LIB_DIR}
-    )
-
-    # Mark files for installation by catkin
-    install (
-        FILES ${LIB_DEST}
-        DESTINATION share/${PROJECT_NAME}
-    )
-    install (
-        DIRECTORY ${LIB_DIR}/ctre
-        DESTINATION share/${PROJECT_NAME}/ctre
     )
 endmacro()
 
@@ -84,6 +73,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # find dependencies
+find_package(Threads REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -97,7 +87,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/Phoenix-Linux-SocketCAN-Example/include
   ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp
 )
 
@@ -110,7 +99,6 @@ set(PHOENIX_LIBRARIES CTRE_Phoenix
                       CTRE_PhoenixCore
 )
 
-
 # Download the CTRE libraries
 add_ctre_library(CTRE_Phoenix                   api-cpp)
 add_ctre_library(CTRE_PhoenixCCI                cci)
@@ -119,42 +107,33 @@ add_ctre_library(CTRE_PhoenixPlatform_socketcan platform-socketcan)
 add_ctre_library(CTRE_PhoenixCanutils           canutils)
 add_ctre_library(CTRE_PhoenixCore               core)
 
+# Create shared library with components and CTRE libraries
 add_library(phoenix_components SHARED
-   "src/victor_component.cpp"
-   "src/talon_component.cpp"
-   "src/falcon_component.cpp")
+   "src/phoenix_components.cpp"
+   "src/phoenix_manager.cpp")
 ament_target_dependencies(phoenix_components
   "rclcpp"
   "rclcpp_components"
   "rcutils")
+target_link_libraries(phoenix_components
+  ${PHOENIX_LIBRARIES}
+  Threads::Threads
+  ros_phoenix__rosidl_typesupport_cpp)
+
+# Register components
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::VictorSPX")
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonSRX")
 rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonFX")
-target_link_libraries(phoenix_components ${PHOENIX_LIBRARIES} ros_phoenix__rosidl_typesupport_cpp)
 
+# Create executable for phoenix_container which links phoenix_components
 add_executable(phoenix_container "src/phoenix_container.cpp")
 ament_target_dependencies(phoenix_container
   "rclcpp"
   "rclcpp_components")
-target_link_libraries(phoenix_container ${PHOENIX_LIBRARIES})
-
-add_executable(victor_node "src/victor_node.cpp")
-ament_target_dependencies(victor_node
-  "rclcpp")
-target_link_libraries(victor_node ${PHOENIX_LIBRARIES} phoenix_components ros_phoenix__rosidl_typesupport_cpp)
-
-add_executable(talon_node "src/talon_node.cpp")
-ament_target_dependencies(talon_node
-  "rclcpp")
-target_link_libraries(talon_node ${PHOENIX_LIBRARIES} phoenix_components ros_phoenix__rosidl_typesupport_cpp)
-
-add_executable(falcon_node "src/falcon_node.cpp")
-ament_target_dependencies(falcon_node
-  "rclcpp")
-target_link_libraries(falcon_node ${PHOENIX_LIBRARIES} phoenix_components ros_phoenix__rosidl_typesupport_cpp)
+target_link_libraries(phoenix_container phoenix_components)
 
 # Install Components
-install(TARGETS phoenix_components phoenix_container victor_node talon_node falcon_node
+install(TARGETS phoenix_components phoenix_container
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME})

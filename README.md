@@ -1,7 +1,7 @@
 # ros_phoenix
 This project contains a ROS2 package for interfacing with CTRE motor controllers. It provides components for controlling Victor SPXs, Talon SRXs, and Falcon 500s. It uses the SocketCAN driver for communicating with these devices over a CAN bus. This version takes advantage of ROS2 features such as composition and improved parameter system. There is full support for changing parameters while the nodes are executing including convenient tuning of PID controllers. It supports Linux on x86-64 and 32/64-bit ARM.
 
-For ROS1 support see the [melodic](https://github.com/vanderbiltrobotics/ros_phoenix/tree/melodic) branch.
+This branch primarily targets ROS2 Foxy but is also compatible with Galactic. For ROS1 support see the [melodic](https://github.com/vanderbiltrobotics/ros_phoenix/tree/melodic) branch. Note that the melodic branch has a significantly different implementation and interface than this branch.
 
 The current version of the code should be stable. However, if you find any bugs or other issues please create an issue or pull request.
 

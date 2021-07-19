@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     node->declare_parameter<int>("watchdog_ms", 200);
 
     ros_phoenix::PhoenixManager::createInstance(
-            node->get_parameter("interface").as_string().c_str(),
+            node->get_parameter("interface").as_string(),
             node->get_parameter("period_ms").as_int(),
             node->get_parameter("watchdog_ms").as_int());
 

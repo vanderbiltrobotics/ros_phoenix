@@ -208,7 +208,7 @@ namespace ros_phoenix
             if (!this->configured_)
                 return;
 
-            if (this->follow_id_ < 0 && this->now() - this->last_update_ > rclcpp::Duration(this->watchdog_ms_ * 1000000))
+            if (this->follow_id_ < 0 && this->now() - this->last_update_ > std::chrono::milliseconds(this->watchdog_ms_))
             {
                 this->controller_->Set(ControlMode::PercentOutput, 0.0);
                 if (!this->watchdog_warned_)
@@ -228,7 +228,8 @@ namespace ros_phoenix
             status.output_current = this->get_output_current();
 
             status.position = this->controller_->GetSelectedSensorPosition();
-            status.velocity = this->controller_->GetSelectedSensorVelocity();
+            // CTRE library returns velocity in units/100ms. Multiply by 10 to get units/s.
+            status.velocity = this->controller_->GetSelectedSensorVelocity() * 10.0;
 
             this->pub_->publish(status);
         }

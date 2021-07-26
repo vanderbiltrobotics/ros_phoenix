@@ -79,6 +79,8 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(pluginlib REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotorControl.msg"
@@ -108,35 +110,55 @@ add_ctre_library(CTRE_PhoenixCanutils           canutils)
 add_ctre_library(CTRE_PhoenixCore               core)
 
 # Create shared library with components and CTRE libraries
-add_library(phoenix_components SHARED
+add_library(${PROJECT_NAME}_components SHARED
    "src/phoenix_components.cpp"
    "src/phoenix_manager.cpp")
-ament_target_dependencies(phoenix_components
+ament_target_dependencies(${PROJECT_NAME}_components
   "rclcpp"
   "rclcpp_components"
   "rcutils")
-target_link_libraries(phoenix_components
+target_link_libraries(${PROJECT_NAME}_components
   ${PHOENIX_LIBRARIES}
   Threads::Threads
   ros_phoenix__rosidl_typesupport_cpp)
 
 # Register components
-rclcpp_components_register_nodes(phoenix_components "ros_phoenix::VictorSPX")
-rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonSRX")
-rclcpp_components_register_nodes(phoenix_components "ros_phoenix::TalonFX")
+rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::VictorSPX")
+rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::TalonSRX")
+rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::TalonFX")
 
-# Create executable for phoenix_container which links phoenix_components
+# Create shared libary with ros2_control PhoenixSystem
+add_library(${PROJECT_NAME}_control
+  "src/phoenix_system.cpp")
+ament_target_dependencies(${PROJECT_NAME}_control
+  "rclcpp"
+  "hardware_interface"
+  "pluginlib"
+  "rcutils")
+target_link_libraries(${PROJECT_NAME}_control
+  ros_phoenix__rosidl_typesupport_cpp)
+
+# Register plugins for control
+pluginlib_export_plugin_description_file(hardware_interface ros_phoenix_hardware.xml)
+
+# Create executable for phoenix_container which links ros_phoenix_components
 add_executable(phoenix_container "src/phoenix_container.cpp")
 ament_target_dependencies(phoenix_container
   "rclcpp"
   "rclcpp_components")
-target_link_libraries(phoenix_container phoenix_components)
+target_link_libraries(phoenix_container ${PROJECT_NAME}_components)
 
 # Install Components
-install(TARGETS phoenix_components phoenix_container
+install(TARGETS ${PROJECT_NAME}_components phoenix_container ${PROJECT_NAME}_control
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME})
+
+# Install headers
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
 
 # Install launch files.
 install(DIRECTORY
@@ -154,5 +176,12 @@ if(BUILD_TESTING)
   #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+ament_export_include_directories(
+  include/
+)
+ament_export_libraries(
+  ${PROJECT_NAME}_components ${PROJECT_NAME}_control
+)
 
 ament_package()

@@ -57,7 +57,10 @@ private:
     std::vector<ros_phoenix::msg::MotorControl::SharedPtr> hw_cmd_;
     std::vector<ros_phoenix::msg::MotorStatus::SharedPtr> hw_status_;
 
-    rclcpp::Node::UniquePtr node_;
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::executors::SingleThreadedExecutor::SharedPtr executor_;
+    std::thread spin_thread_;
+
     std::vector<rclcpp::Publisher<ros_phoenix::msg::MotorControl>::SharedPtr> publishers_;
     std::vector<rclcpp::Subscription<ros_phoenix::msg::MotorStatus>::SharedPtr> subscribers_;
 };

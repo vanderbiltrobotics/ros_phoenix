@@ -109,7 +109,7 @@ std::vector<hardware_interface::CommandInterface> PhoenixSystem::export_command_
 hardware_interface::return_type PhoenixSystem::start()
 {
     RCLCPP_INFO(this->logger_, "start()");
-    this->node_ = rclcpp::Node::make_unique(this->info_.name);
+    this->node_ = rclcpp::Node::make_shared(this->info_.name);
 
     for (auto i = 0u; i < this->info_.joints.size(); i++) {
         this->publishers_.push_back(this->node_->create_publisher<ros_phoenix::msg::MotorControl>(
@@ -122,6 +122,12 @@ hardware_interface::return_type PhoenixSystem::start()
                     *(this->hw_status_[i]) = *status;
                 }));
     }
+
+    this->executor_ = rclcpp::executors::SingleThreadedExecutor::make_shared();
+    this->executor_->add_node(this->node_);
+
+    this->spin_thread_ = std::thread([this]() { this->executor_->spin(); });
+
     RCLCPP_INFO(this->logger_, "start()");
     return hardware_interface::return_type::OK;
 }
@@ -129,16 +135,21 @@ hardware_interface::return_type PhoenixSystem::start()
 hardware_interface::return_type PhoenixSystem::stop()
 {
     RCLCPP_INFO(this->logger_, "stop()");
+
+    this->executor_->cancel();
+    this->spin_thread_.join();
+
     this->publishers_.clear();
     this->subscribers_.clear();
-    this->node_.release();
+    this->node_.reset();
+
     RCLCPP_INFO(this->logger_, "stop()");
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type PhoenixSystem::read()
 {
-    // Do nothing because this->hw_status_ is updated asynchronously
+    // Do nothing because this->hw_status_ is updated asynchronously in this->spin_thread_
     return hardware_interface::return_type::OK;
 }
 

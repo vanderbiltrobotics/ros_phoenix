@@ -2,32 +2,46 @@
 #define ROS_PHOENIX_PHOENIX_MANAGER
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
-namespace ros_phoenix
-{
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp_components/component_manager.hpp"
 
-    class PhoenixManager {
-    public:
-        static std::shared_ptr<PhoenixManager> createInstance(const std::string& interface, int period_ms, int watchdog_ms);
+using namespace rclcpp;
 
-        static bool instanceCreated();
+namespace ros_phoenix {
 
-        ~PhoenixManager();
+class PhoenixManager : public rclcpp_components::ComponentManager {
+public:
+    static std::shared_ptr<PhoenixManager> getInstance(std::weak_ptr<rclcpp::Executor> exec);
 
-    private:
-        static std::shared_ptr<PhoenixManager> singleton_;
+    static bool instanceCreated();
 
-        PhoenixManager(const std::string& interface, int period_ms, int watchdog_ms);
+    static const std::string PARAMETER_INTERFACE;
+    static const std::string PARAMETER_PERIOD_MS;
+    static const std::string PARAMETER_WATCHDOG_MS;
 
-        void feedEnable(int period_ms, int watchdog_ms);
+    rcl_interfaces::msg::SetParametersResult reconfigure(
+        const std::vector<rclcpp::Parameter>& params);
 
-        bool shutdown_requested_ = false;
-        std::thread watchdog_thread_;
+protected:
+    PhoenixManager(std::weak_ptr<rclcpp::Executor> exec,
+        const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions());
 
-    };
+private:
+    static std::mutex singleton_mutex_;
+    static std::shared_ptr<PhoenixManager> singleton_;
 
-}
+    void feedEnable() const;
+
+    OnSetParametersCallbackHandle::SharedPtr set_parameters_callback_;
+    TimerBase::SharedPtr timer_;
+
+    int watchdog_ms_ = -1;
+};
+
+} // namespace ros_phoenix
 
 #endif // ROS_PHOENIX_PHOENIX_MANAGER

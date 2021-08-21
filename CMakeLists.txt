@@ -111,8 +111,10 @@ add_ctre_library(CTRE_PhoenixCore               core)
 
 # Create shared library with components and CTRE libraries
 add_library(${PROJECT_NAME}_components SHARED
-   "src/phoenix_components.cpp"
-   "src/phoenix_manager.cpp")
+  "src/base_node.cpp"
+  "src/phoenix_nodes.cpp"
+  "src/phoenix_components.cpp"
+  "src/phoenix_manager.cpp")
 ament_target_dependencies(${PROJECT_NAME}_components
   "rclcpp"
   "rclcpp_components"
@@ -123,12 +125,13 @@ target_link_libraries(${PROJECT_NAME}_components
   ros_phoenix__rosidl_typesupport_cpp)
 
 # Register components
-rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::VictorSPX")
-rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::TalonSRX")
 rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::TalonFX")
+rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::TalonSRX")
+rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::VictorSPX")
 
-# Create shared libary with ros2_control PhoenixSystem
+# Create shared libary with ros2_control PhoenixBridge
 add_library(${PROJECT_NAME}_control
+  "src/phoenix_bridge.cpp"
   "src/phoenix_system.cpp")
 ament_target_dependencies(${PROJECT_NAME}_control
   "rclcpp"
@@ -136,6 +139,7 @@ ament_target_dependencies(${PROJECT_NAME}_control
   "pluginlib"
   "rcutils")
 target_link_libraries(${PROJECT_NAME}_control
+  ${PROJECT_NAME}_components
   ros_phoenix__rosidl_typesupport_cpp)
 
 # Register plugins for control

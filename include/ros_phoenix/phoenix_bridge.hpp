@@ -1,9 +1,8 @@
-#ifndef ROS_PHOENIX_PHOENIX_SYSTEM
-#define ROS_PHOENIX_PHOENIX_SYSTEM
+#ifndef ROS_PHOENIX_PHOENIX_BRIDGE
+#define ROS_PHOENIX_PHOENIX_BRIDGE
 
 #include <thread>
 
-#include "ros_phoenix/base_node.hpp"
 #include "ros_phoenix/msg/motor_control.hpp"
 #include "ros_phoenix/msg/motor_status.hpp"
 
@@ -14,25 +13,18 @@
 #include "rclcpp/macros.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#define Phoenix_No_WPI // remove WPI dependencies
-#include "ctre/Phoenix.h"
-
 namespace ros_phoenix {
 
-class PhoenixSystem
+class PhoenixBridge
     : public hardware_interface::BaseInterface<hardware_interface::SystemInterface> {
 public:
-    static const std::string PERCENT_OUTPUT;
-    static const std::string POSITION;
-    static const std::string VELOCITY;
+    RCLCPP_SHARED_PTR_DEFINITIONS(PhoenixBridge)
 
-    RCLCPP_SHARED_PTR_DEFINITIONS(PhoenixSystem)
+    PhoenixBridge();
 
-    PhoenixSystem();
+    PhoenixBridge(PhoenixBridge&& other) = default;
 
-    PhoenixSystem(PhoenixSystem&& other) = default;
-
-    ~PhoenixSystem() = default;
+    ~PhoenixBridge() = default;
 
     hardware_interface::return_type configure(const hardware_interface::HardwareInfo& info);
 
@@ -49,22 +41,24 @@ public:
     hardware_interface::return_type write();
 
 private:
-    struct JointInfo {
-        hardware_interface::ComponentInfo info;
-        BaseNode::SharedPtr node;
-        ros_phoenix::msg::MotorControl::SharedPtr control;
-        ros_phoenix::msg::MotorStatus::SharedPtr status;
+    enum InterfaceType {
+        INVALID = -1,
+        PERCENT_OUTPUT = 0,
+        POSITION = 1,
+        VELOCITY = 2,
     };
 
-    static ControlMode str_to_interface(const std::string& str);
+    static InterfaceType str_to_interface(const std::string& str);
 
     rclcpp::Logger logger_;
 
     hardware_interface::HardwareInfo info_;
 
-    std::vector<JointInfo> joints_;
+    std::vector<ros_phoenix::msg::MotorControl::SharedPtr> hw_cmd_;
+    std::vector<ros_phoenix::msg::MotorStatus::SharedPtr> hw_status_;
 
-    rclcpp::executors::SingleThreadedExecutor::SharedPtr exec_;
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::executors::SingleThreadedExecutor::SharedPtr executor_;
     std::thread spin_thread_;
 
     std::vector<rclcpp::Publisher<ros_phoenix::msg::MotorControl>::SharedPtr> publishers_;
@@ -72,4 +66,4 @@ private:
 };
 
 } // namespace ros_phoenix
-#endif // ROS_PHOENIX_PHOENIX_SYSTEM
+#endif // ROS_PHOENIX_PHOENIX_BRIDGE

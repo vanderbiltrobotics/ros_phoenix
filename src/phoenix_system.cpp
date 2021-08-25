@@ -60,11 +60,11 @@ const std::string PhoenixSystem::VELOCITY = hardware_interface::HW_IF_VELOCITY;
 
 BaseNode::SharedPtr create_node(const std::string& name, const std::string& type)
 {
-    if (type == "ros_phoenix::node::TalonFX") {
+    if (type == "ros_phoenix::TalonFX") {
         return std::shared_ptr<TalonFXNode>(new TalonFXNode(name));
-    } else if (type == "ros_phoenix::node::TalonSRX") {
+    } else if (type == "ros_phoenix::TalonSRX") {
         return std::shared_ptr<TalonSRXNode>(new TalonSRXNode(name));
-    } else if (type == "ros_phoenix::node::VictorSPX") {
+    } else if (type == "ros_phoenix::VictorSPX") {
         return std::shared_ptr<VictorSPXNode>(new VictorSPXNode(name));
     }
 

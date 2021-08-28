@@ -66,6 +66,12 @@ void BaseNode::initialize()
 
 void BaseNode::set(MotorControl::SharedPtr control_msg __attribute__((unused)))
 {
+    if (!this->configured_) {
+        control_msg = std::make_shared<MotorControl>();
+        control_msg->mode = MotorControl::DISABLED;
+        control_msg->value = 0.0;
+    }
+
     if (this->follow_id_ < 0 && control_msg->mode != MotorControl::DISABLED) {
         this->last_update_ = this->now();
         if (this->watchdog_warned_) {

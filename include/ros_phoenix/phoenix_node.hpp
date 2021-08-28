@@ -58,16 +58,11 @@ public:
 
         BaseNode::set(control_msg);
 
-        if (!this->configured_) {
-            control_msg->mode = MotorControl::DISABLED;
-            control_msg->value = 0.0;
-        }
-
         ControlMode mode = static_cast<ControlMode>(control_msg->mode);
         if (mode == ControlMode::Velocity) {
-            this->controller_->Set(mode, control_msg->value / 10);
+            this->controller_->Set(mode, control_msg->value / 10.0 / this->sensor_multiplier_);
         } else {
-            this->controller_->Set(mode, control_msg->value);
+            this->controller_->Set(mode, control_msg->value / this->sensor_multiplier_);
         }
     }
 

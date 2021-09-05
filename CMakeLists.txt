@@ -129,7 +129,7 @@ rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::TalonF
 rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::TalonSRX")
 rclcpp_components_register_nodes(${PROJECT_NAME}_components "ros_phoenix::VictorSPX")
 
-# Create shared libary with ros2_control PhoenixBridge
+# Create shared libary with ros2_control PhoenixBridge and PhoenixSystem
 add_library(${PROJECT_NAME}_control
   "src/phoenix_bridge.cpp"
   "src/phoenix_system.cpp")

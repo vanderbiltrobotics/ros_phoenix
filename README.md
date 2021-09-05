@@ -66,7 +66,7 @@ The `phoenix_container` allows motor controller nodes to be dynamically created 
 - `period_ms` (20): Period in milliseconds of status updates
 - `watchdog_ms` (100): Watchdog timer. Must be greater than period_ms!
 - `follow_id` (-1): If >= to zero, the ID of another device to follow
-- `edges_per_rot` (4096): Encoder edges per rotation
+- `edges_per_rot` (2048): Encoder edges per rotation
 - `invert` (false): Invert motor output
 - `invert_sensor` (false): Invert sensor direction
 - `brake_mode` (true): Enable brake mode
@@ -78,3 +78,29 @@ The `phoenix_container` allows motor controller nodes to be dynamically created 
 - `I` (0.0): kI
 - `D` (0.0): kD
 - `F` (0.0): kF
+
+## ros2_control Integration
+This package additionally contains two implementations of a ros2_control hardware interface
+which can be used to control CTRE motor controllers. The `ros_phoenix/PhoenixBridge` acts as
+a bridge between phoenix components and the ros2_control interface. It requires that the
+components are started separately in a `phoenix_container`. The motor controllers are then
+controlled through the topic interfaces described above. To avoid the overhead of using
+topics, the `ros_phoenix/PhoenixSystem` can be used standalone without a `phoenix_container`.
+The system has the same interface as the bridge but does not publish any status or control
+topics.
+
+See examples of how to configure these hardware interfaces in [`ros2_control/`]
+(https://github.com/vanderbiltrobotics/ros_phoenix/tree/foxy/ros2_control). These examples
+are based off of the ros2_control diffbot example. To see how this configuration can be used
+look at the original example in `ros2_control_demos/ros2_control_demo_description`.
+
+### Parameter Interface
+The `ros_phoenix/PhoenixBridge` does not provide any interface for configuring the motor
+controllers because this configuration is done while launching the PhoenixContainer and
+adding components. Whereas, `ros_phoenix/PhoenixSystem` allows the configuration of all
+the same parameters through the xml config file. Using the `<param/>` tag, hardware
+parameters are given to the `PhoenixManager`. It accepts all the same parameters
+as the `PhoenixContainer`. Each motor controller corresponds to one joint. Therefore,
+the joint parameters match the available component parameters.
+
+Both hardware interface implementations support dynamic reconfiguration of parameters.

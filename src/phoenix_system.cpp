@@ -12,7 +12,6 @@ hardware_interface::return_type set_parameters(
     for (const auto& p : parameters) {
         std::string name(p.first);
         std::string value(p.second);
-        RCLCPP_INFO(node->get_logger(), "Setting %s = %s", name.c_str(), value.c_str());
 
         if (node->has_parameter(name)) {
             auto param = node->get_parameter(name);
@@ -32,18 +31,18 @@ hardware_interface::return_type set_parameters(
                 } else if (value == "false") {
                     node->set_parameter(Parameter(name, false));
                 } else {
-                    RCLCPP_ERROR(node->get_logger(),
+                    RCLCPP_FATAL(node->get_logger(),
                         "Boolean parameter '%s' must be either 'true' or 'false'", name.c_str());
                     return hardware_interface::return_type::ERROR;
                 }
                 break;
             default:
-                RCLCPP_ERROR(node->get_logger(), "Unsupported parameter type: %s",
+                RCLCPP_FATAL(node->get_logger(), "Unsupported parameter type: %s",
                     param.get_type_name().c_str());
                 return hardware_interface::return_type::ERROR;
             }
         } else {
-            RCLCPP_ERROR(node->get_logger(), "Unknown parameter '%s' for node '%s'", name.c_str(),
+            RCLCPP_FATAL(node->get_logger(), "Unknown parameter '%s' for node '%s'", name.c_str(),
                 node->get_name());
             return hardware_interface::return_type::ERROR;
         }
@@ -60,11 +59,11 @@ const std::string PhoenixSystem::VELOCITY = hardware_interface::HW_IF_VELOCITY;
 
 BaseNode::SharedPtr create_node(const std::string& name, const std::string& type)
 {
-    if (type == "ros_phoenix::node::TalonFX") {
+    if (type == "ros_phoenix::TalonFX") {
         return std::shared_ptr<TalonFXNode>(new TalonFXNode(name));
-    } else if (type == "ros_phoenix::node::TalonSRX") {
+    } else if (type == "ros_phoenix::TalonSRX") {
         return std::shared_ptr<TalonSRXNode>(new TalonSRXNode(name));
-    } else if (type == "ros_phoenix::node::VictorSPX") {
+    } else if (type == "ros_phoenix::VictorSPX") {
         return std::shared_ptr<VictorSPXNode>(new VictorSPXNode(name));
     }
 
@@ -76,10 +75,10 @@ ControlMode PhoenixSystem::str_to_interface(const std::string& str)
     if (str == PhoenixSystem::PERCENT_OUTPUT) {
         return ControlMode::PercentOutput;
 
-    } else if (str == hardware_interface::HW_IF_POSITION) {
+    } else if (str == PhoenixSystem::POSITION) {
         return ControlMode::Position;
 
-    } else if (str == hardware_interface::HW_IF_VELOCITY) {
+    } else if (str == PhoenixSystem::VELOCITY) {
         return ControlMode::Velocity;
 
     } else {
@@ -97,7 +96,13 @@ hardware_interface::return_type PhoenixSystem::configure(
 {
     this->logger_ = rclcpp::get_logger(info.name);
     this->exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-    auto phoenix_manager = ros_phoenix::PhoenixManager::getInstance(this->exec_);
+    std::shared_ptr<ros_phoenix::PhoenixManager> phoenix_manager = nullptr;
+    try {
+        phoenix_manager = ros_phoenix::PhoenixManager::getInstance(this->exec_);
+    } catch (const std::runtime_error& exec) {
+        RCLCPP_FATAL(this->logger_, "Multiple instance of PhoenixSystem were detected. Only one per process is allowed!");
+        return hardware_interface::return_type::ERROR;
+    }
 
     auto rc = set_parameters(info.hardware_parameters, phoenix_manager);
     if (rc != hardware_interface::return_type::OK)
@@ -108,7 +113,7 @@ hardware_interface::return_type PhoenixSystem::configure(
     for (auto joint : info.joints) {
         auto type_param = joint.parameters.find("type");
         if (type_param == joint.parameters.end()) {
-            RCLCPP_ERROR(phoenix_manager->get_logger(),
+            RCLCPP_FATAL(phoenix_manager->get_logger(),
                 "Joint '%s' is missing required parameter 'type'", joint.name.c_str());
             return hardware_interface::return_type::ERROR;
         }
@@ -116,32 +121,41 @@ hardware_interface::return_type PhoenixSystem::configure(
         auto type_name = (*type_param).second;
         auto node = create_node(joint.name, type_name);
         if (!node) {
-            RCLCPP_ERROR(phoenix_manager->get_logger(), "Joint '%s' is of invalid type '%s'",
+            RCLCPP_FATAL(phoenix_manager->get_logger(), "Joint '%s' is of invalid type '%s'",
                 joint.name.c_str(), type_name.c_str());
             return hardware_interface::return_type::ERROR;
         }
-        node->initialize();
-        this->exec_->add_node(node);
-
         auto parameters = joint.parameters;
         parameters.erase("type");
-        set_parameters(parameters, node);
+        auto rc = set_parameters(parameters, node);
+        if (rc != hardware_interface::return_type::OK)
+            return rc;
+
+        this->exec_->add_node(node);
 
         auto control = std::make_shared<ros_phoenix::msg::MotorControl>();
         auto status = std::make_shared<ros_phoenix::msg::MotorStatus>();
 
         if (joint.command_interfaces.size() != 1) {
-            RCLCPP_ERROR(this->logger_, "Joint '%s' has %d command interfaces. Expected 1.",
+            RCLCPP_FATAL(this->logger_, "Joint '%s' has %d command interfaces. Expected 1.",
                 joint.name.c_str(), joint.command_interfaces.size());
             return hardware_interface::return_type::ERROR;
         }
         ControlMode cmd_interface = str_to_interface(joint.command_interfaces[0].name);
         if (cmd_interface == ControlMode::Disabled) {
-            RCLCPP_ERROR(this->logger_, "Joint '%s' has an invalid command interface: %s",
+            RCLCPP_FATAL(this->logger_, "Joint '%s' has an invalid command interface: %s",
                 joint.name.c_str(), joint.command_interfaces[0].name.c_str());
             return hardware_interface::return_type::ERROR;
         }
         control->mode = static_cast<int>(cmd_interface);
+
+        for (auto& state_intf : joint.state_interfaces) {
+            if (str_to_interface(state_intf.name) == ControlMode::Disabled) {
+                RCLCPP_FATAL(this->logger_, "Joint '%s' has an invalid state interface: %s",
+                    joint.name.c_str(), state_intf.name.c_str());
+                return hardware_interface::return_type::ERROR;
+            }
+        }
 
         this->joints_.push_back({ joint, node, control, status });
     }
@@ -155,17 +169,17 @@ std::vector<hardware_interface::StateInterface> PhoenixSystem::export_state_inte
 
     for (auto& joint : this->joints_) {
         for (auto& state_inter : joint.info.state_interfaces) {
-            if (state_inter.name == "percent_output") {
+            if (state_inter.name == PhoenixSystem::PERCENT_OUTPUT) {
                 state_interfaces.emplace_back(
-                    joint.info.name, "percent_output", &(joint.status->output_percent));
+                    joint.info.name, PhoenixSystem::PERCENT_OUTPUT, &(joint.status->output_percent));
 
-            } else if (state_inter.name == "position") {
+            } else if (state_inter.name == PhoenixSystem::POSITION) {
                 state_interfaces.emplace_back(
-                    joint.info.name, "position", &(joint.status->position));
+                    joint.info.name, PhoenixSystem::POSITION, &(joint.status->position));
 
-            } else if (state_inter.name == "velocity") {
+            } else if (state_inter.name == PhoenixSystem::VELOCITY) {
                 state_interfaces.emplace_back(
-                    joint.info.name, "velocity", &(joint.status->velocity));
+                    joint.info.name, PhoenixSystem::VELOCITY, &(joint.status->velocity));
             }
         }
     }

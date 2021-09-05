@@ -52,25 +52,26 @@ public:
 
     virtual void set(MotorControl::SharedPtr control_msg)
     {
+        if (this->follow_id_ >= 0) {
+            return;
+        }
+
         BaseNode::set(control_msg);
 
-        if (this->configured_) {
-            ControlMode mode = static_cast<ControlMode>(control_msg->mode);
-            if (mode == ControlMode::Velocity)
-                this->controller_->Set(mode, control_msg->value / 10);
-            else
-                this->controller_->Set(mode, control_msg->value);
+        ControlMode mode = static_cast<ControlMode>(control_msg->mode);
+        if (mode == ControlMode::Velocity) {
+            this->controller_->Set(mode, control_msg->value / 10.0 / this->sensor_multiplier_);
+        } else {
+            this->controller_->Set(mode, control_msg->value / this->sensor_multiplier_);
         }
     }
 
     virtual rcl_interfaces::msg::SetParametersResult reconfigure(
         const std::vector<rclcpp::Parameter>& params)
     {
-        RCLCPP_INFO(this->get_logger(), "phoenix_node reconfigure()");
         std::lock_guard<std::mutex> guard(this->config_mutex_);
 
         for (auto& param : params) {
-            RCLCPP_INFO(this->get_logger(), "phoenix_node set %s", param.get_name().c_str());
             if (param.get_name() == Parameter::ID) {
                 this->controller_ = std::make_shared<MotorController>(param.as_int());
             }
@@ -86,8 +87,9 @@ protected:
         while (!this->configured_) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
             std::lock_guard<std::mutex> guard(this->config_mutex_);
-            if (this->configured_)
+            if (this->configured_) {
                 break; // Break out if signaled to stop while sleeping
+            }
 
             if (this->controller_->GetFirmwareVersion() == -1) {
                 if (!warned) {
@@ -131,8 +133,9 @@ protected:
             this->controller_->SetSensorPhase(this->get_parameter("invert_sensor").as_bool());
             this->controller_->SelectProfileSlot(0, 0);
 
-            if (this->follow_id_ >= 0)
+            if (this->follow_id_ >= 0) {
                 this->controller_->Set(ControlMode::Follower, this->follow_id_);
+            }
 
             RCLCPP_INFO(this->get_logger(), "Successfully configured Motor Controller");
             this->configured_ = true;

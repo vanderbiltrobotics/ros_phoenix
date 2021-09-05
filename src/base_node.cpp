@@ -10,7 +10,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
 {
     // Detect if component run outside of a phoenix container
     if (!PhoenixManager::instanceCreated()) {
-        RCLCPP_ERROR(
+        RCLCPP_FATAL(
             this->get_logger(), "Phoenix components must be run inside phoenix container!");
         throw new std::runtime_error("Phoenix components must be run inside phoenix container!");
     }
@@ -20,7 +20,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
     this->template declare_parameter<int>("period_ms", 20);
     this->declare_parameter<int>("follow_id", -1);
     this->declare_parameter<int>(
-        "edges_per_rot", 4096); // Encoder edges per rotation (4096 is for built-in encoder)
+        "edges_per_rot", 2048); // Encoder edges per rotation (2048 is for Falcon built-in encoder)
     this->declare_parameter<bool>("invert", false);
     this->declare_parameter<bool>("invert_sensor", false);
     this->declare_parameter<bool>("brake_mode", true);
@@ -44,6 +44,10 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
     this->timer_ = this->create_wall_timer(
         std::chrono::milliseconds(this->get_parameter("period_ms").as_int()),
         std::bind(&BaseNode::onTimer, this));
+
+    this->set_parameters_callback_ = this->add_on_set_parameters_callback(
+        [this](const std::vector<rclcpp::Parameter>& params) { return this->reconfigure(params); });
+    this->reconfigure({});
 }
 
 BaseNode::~BaseNode()
@@ -56,24 +60,26 @@ BaseNode::~BaseNode()
     }
 }
 
-void BaseNode::initialize()
-{
-    this->set_parameters_callback_ = this->add_on_set_parameters_callback(
-        [this](const std::vector<rclcpp::Parameter>& params) { return this->reconfigure(params); });
-
-    this->reconfigure({});
-}
-
 void BaseNode::set(MotorControl::SharedPtr control_msg __attribute__((unused)))
 {
-    this->last_update_ = this->now();
-    this->watchdog_warned_ = false;
+    if (!this->configured_) {
+        control_msg = std::make_shared<MotorControl>();
+        control_msg->mode = MotorControl::DISABLED;
+        control_msg->value = 0.0;
+    }
+
+    if (this->follow_id_ < 0 && control_msg->mode != MotorControl::DISABLED) {
+        this->last_update_ = this->now();
+        if (this->watchdog_warned_) {
+            RCLCPP_INFO(this->get_logger(), "Motor output enabled after receiving command");
+        }
+        this->watchdog_warned_ = false;
+    }
 }
 
 rcl_interfaces::msg::SetParametersResult BaseNode::reconfigure(
     const std::vector<rclcpp::Parameter>& params)
 {
-    RCLCPP_INFO(this->get_logger(), "phoenix_node reconfigure()");
     for (auto param : params) {
         RCLCPP_DEBUG(this->get_logger(), "Parameter changed: %s=%s", param.get_name().c_str(),
             param.value_to_string().c_str());
@@ -82,18 +88,18 @@ rcl_interfaces::msg::SetParametersResult BaseNode::reconfigure(
 
         } else if (param.get_name() == "period_ms") {
             this->timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(this->get_parameter("period_ms").as_int()),
+                std::chrono::milliseconds(param.as_int()),
                 std::bind(&BaseNode::onTimer, this));
 
         } else if (param.get_name() == "follow_id") {
-            this->follow_id_ = this->get_parameter("follow_id").as_int();
+            this->follow_id_ = param.as_int();
 
         } else if (param.get_name() == "sensor_multiplier") {
-            this->sensor_multiplier_ = this->get_parameter("sensor_multiplier").as_double();
+            this->sensor_multiplier_ = param.as_double();
         }
     }
 
-    if (!this->config_thread_) {
+    if (!this->config_thread_) { // Thread does not exist, create it
         this->configured_ = false;
         this->config_thread_ = std::make_shared<std::thread>(std::bind(&BaseNode::configure, this));
     } else if (this->configured_) { // Thread needs to be joined and restarted
@@ -112,14 +118,13 @@ void BaseNode::onTimer()
     if (!this->configured_)
         return;
 
-    auto last_update = this->last_update_;
+    // Check if watchdog has expired
     if (this->follow_id_ < 0
-        && this->now() - last_update > std::chrono::milliseconds(this->watchdog_ms_)) {
+            && this->now() - this->last_update_ > std::chrono::milliseconds(this->watchdog_ms_)) {
         MotorControl::SharedPtr msg = std::make_shared<MotorControl>();
-        msg->mode = MotorControl::PERCENT_OUTPUT;
+        msg->mode = MotorControl::DISABLED;
         msg->value = 0.0;
         this->set(msg);
-        this->last_update_ = last_update; // Reset change to value caused by this->set()
 
         if (!this->watchdog_warned_) {
             RCLCPP_WARN(this->get_logger(), "Watchdog timer expired: Motor ouput disabled");

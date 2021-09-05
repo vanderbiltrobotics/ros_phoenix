@@ -23,11 +23,9 @@ public:
 
     virtual ~BaseNode();
 
-    void initialize();
-
     virtual MotorStatus::SharedPtr status() = 0;
 
-    void set(MotorControl::SharedPtr control_msg);
+    virtual void set(MotorControl::SharedPtr control_msg);
 
     virtual rcl_interfaces::msg::SetParametersResult reconfigure(
         const std::vector<rclcpp::Parameter>& params);

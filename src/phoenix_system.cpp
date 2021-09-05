@@ -125,12 +125,12 @@ hardware_interface::return_type PhoenixSystem::configure(
                 joint.name.c_str(), type_name.c_str());
             return hardware_interface::return_type::ERROR;
         }
-    
         auto parameters = joint.parameters;
         parameters.erase("type");
-        set_parameters(parameters, node);
+        auto rc = set_parameters(parameters, node);
+        if (rc != hardware_interface::return_type::OK)
+            return rc;
 
-        node->initialize();
         this->exec_->add_node(node);
 
         auto control = std::make_shared<ros_phoenix::msg::MotorControl>();
@@ -148,6 +148,14 @@ hardware_interface::return_type PhoenixSystem::configure(
             return hardware_interface::return_type::ERROR;
         }
         control->mode = static_cast<int>(cmd_interface);
+
+        for (auto& state_intf : joint.state_interfaces) {
+            if (str_to_interface(state_intf.name) == ControlMode::Disabled) {
+                RCLCPP_FATAL(this->logger_, "Joint '%s' has an invalid state interface: %s",
+                    joint.name.c_str(), state_intf.name.c_str());
+                return hardware_interface::return_type::ERROR;
+            }
+        }
 
         this->joints_.push_back({ joint, node, control, status });
     }

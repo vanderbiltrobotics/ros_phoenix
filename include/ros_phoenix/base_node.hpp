@@ -23,8 +23,6 @@ public:
 
     virtual ~BaseNode();
 
-    void initialize();
-
     virtual MotorStatus::SharedPtr status() = 0;
 
     virtual void set(MotorControl::SharedPtr control_msg);

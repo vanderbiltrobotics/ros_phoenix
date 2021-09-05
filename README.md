@@ -98,8 +98,8 @@ look at the original example in `ros2_control_demos/ros2_control_demo_descriptio
 The `ros_phoenix/PhoenixBridge` does not provide any interface for configuring the motor
 controllers because this configuration is done while launching the PhoenixContainer and
 adding components. Whereas, `ros_phoenix/PhoenixSystem` allows the configuration of all
-the same parameters through the xml config file. Using the `<param/>` tag, parameters
-at the top level are given to the `PhoenixManager`. It accepts all the same parameters
+the same parameters through the xml config file. Using the `<param/>` tag, hardware
+parameters are given to the `PhoenixManager`. It accepts all the same parameters
 as the `PhoenixContainer`. Each motor controller corresponds to one joint. Therefore,
 the joint parameters match the available component parameters.
 

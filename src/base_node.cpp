@@ -44,6 +44,10 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
     this->timer_ = this->create_wall_timer(
         std::chrono::milliseconds(this->get_parameter("period_ms").as_int()),
         std::bind(&BaseNode::onTimer, this));
+
+    this->set_parameters_callback_ = this->add_on_set_parameters_callback(
+        [this](const std::vector<rclcpp::Parameter>& params) { return this->reconfigure(params); });
+    this->reconfigure({});
 }
 
 BaseNode::~BaseNode()
@@ -54,14 +58,6 @@ BaseNode::~BaseNode()
         lock.unlock();
         this->config_thread_->join();
     }
-}
-
-void BaseNode::initialize()
-{
-    this->set_parameters_callback_ = this->add_on_set_parameters_callback(
-        [this](const std::vector<rclcpp::Parameter>& params) { return this->reconfigure(params); });
-
-    this->reconfigure({});
 }
 
 void BaseNode::set(MotorControl::SharedPtr control_msg __attribute__((unused)))

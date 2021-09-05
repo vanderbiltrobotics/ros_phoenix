@@ -15,8 +15,6 @@ public:
             = this->template create_publisher<ros_phoenix::msg::MotorStatus>(name + "/status", 1);
         this->sub_ = this->template create_subscription<ros_phoenix::msg::MotorControl>(
             name + "/set", 1, std::bind(&BaseNode::set, this, std::placeholders::_1));
-
-        this->initialize();
     }
 
 private:

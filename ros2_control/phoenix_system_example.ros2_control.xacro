@@ -6,6 +6,8 @@
         <plugin>ros_phoenix/PhoenixSystem</plugin>
       </hardware>
 
+      <param name="interface">can0</param>
+
       <joint name="left_wheel_joint">
         <param name="type">ros_phoenix::TalonFX</param>
         <param name="id">20</param>

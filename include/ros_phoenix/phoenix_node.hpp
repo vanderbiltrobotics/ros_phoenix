@@ -72,7 +72,6 @@ public:
         std::lock_guard<std::mutex> guard(this->config_mutex_);
 
         for (auto& param : params) {
-            RCLCPP_INFO(this->get_logger(), "phoenix_node set %s", param.get_name().c_str());
             if (param.get_name() == Parameter::ID) {
                 this->controller_ = std::make_shared<MotorController>(param.as_int());
             }

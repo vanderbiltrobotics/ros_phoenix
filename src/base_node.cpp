@@ -10,7 +10,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
 {
     // Detect if component run outside of a phoenix container
     if (!PhoenixManager::instanceCreated()) {
-        RCLCPP_ERROR(
+        RCLCPP_FATAL(
             this->get_logger(), "Phoenix components must be run inside phoenix container!");
         throw new std::runtime_error("Phoenix components must be run inside phoenix container!");
     }
@@ -20,7 +20,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
     this->template declare_parameter<int>("period_ms", 20);
     this->declare_parameter<int>("follow_id", -1);
     this->declare_parameter<int>(
-        "edges_per_rot", 4096); // Encoder edges per rotation (4096 is for built-in encoder)
+        "edges_per_rot", 2048); // Encoder edges per rotation (2048 is for Falcon built-in encoder)
     this->declare_parameter<bool>("invert", false);
     this->declare_parameter<bool>("invert_sensor", false);
     this->declare_parameter<bool>("brake_mode", true);
@@ -85,7 +85,7 @@ rcl_interfaces::msg::SetParametersResult BaseNode::reconfigure(
     const std::vector<rclcpp::Parameter>& params)
 {
     for (auto param : params) {
-        RCLCPP_INFO(this->get_logger(), "Parameter changed: %s=%s", param.get_name().c_str(),
+        RCLCPP_DEBUG(this->get_logger(), "Parameter changed: %s=%s", param.get_name().c_str(),
             param.value_to_string().c_str());
         if (param.get_name() == "watchdog_ms") {
             this->watchdog_ms_ = param.as_int();
@@ -103,7 +103,7 @@ rcl_interfaces::msg::SetParametersResult BaseNode::reconfigure(
         }
     }
 
-    if (!this->config_thread_) {
+    if (!this->config_thread_) { // Thread does not exist, create it
         this->configured_ = false;
         this->config_thread_ = std::make_shared<std::thread>(std::bind(&BaseNode::configure, this));
     } else if (this->configured_) { // Thread needs to be joined and restarted
@@ -122,8 +122,9 @@ void BaseNode::onTimer()
     if (!this->configured_)
         return;
 
+    // Check if watchdog has expired
     if (this->follow_id_ < 0
-        && this->now() - this->last_update_ > std::chrono::milliseconds(this->watchdog_ms_)) {
+            && this->now() - this->last_update_ > std::chrono::milliseconds(this->watchdog_ms_)) {
         MotorControl::SharedPtr msg = std::make_shared<MotorControl>();
         msg->mode = MotorControl::DISABLED;
         msg->value = 0.0;

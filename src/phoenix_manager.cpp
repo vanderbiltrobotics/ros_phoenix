@@ -2,7 +2,7 @@
 
 #define Phoenix_No_WPI // remove WPI dependencies
 #include "ctre/phoenix/cci/Unmanaged_CCI.h"
-#include "ctre/phoenix/platform/Platform.h"
+#include "ctre/phoenix/platform/can/PlatformCAN.h"
 #include "ctre/phoenix/unmanaged/Unmanaged.h"
 
 #include <functional>
@@ -57,7 +57,7 @@ rcl_interfaces::msg::SetParametersResult PhoenixManager::reconfigure(
 {
     for (const auto& param : params) {
         if (param.get_name() == PARAMETER_INTERFACE) {
-            ctre::phoenix::platform::can::SetCANInterface(param.as_string().c_str());
+            ctre::phoenix::platform::can::PlatformCAN::SetCANInterface(param.as_string().c_str());
         } else if (param.get_name() == PARAMETER_PERIOD_MS) {
             this->timer_ = this->create_wall_timer(std::chrono::milliseconds(param.as_int()),
                 std::bind(&PhoenixManager::feedEnable, this));

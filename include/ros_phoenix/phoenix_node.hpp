@@ -24,8 +24,7 @@ public:
     explicit PhoenixNode(const std::string& name, const NodeOptions& options = NodeOptions())
         : BaseNode(name, options)
     {
-        this->controller_
-            = std::make_shared<MotorController>(this->get_parameter(Parameter::ID).as_int());
+        this->controller_ = std::make_shared<MotorController>(this->id_, this->interface_);
     }
 
     virtual ~PhoenixNode() { }
@@ -73,7 +72,11 @@ public:
 
         for (auto& param : params) {
             if (param.get_name() == Parameter::ID) {
-                this->controller_ = std::make_shared<MotorController>(param.as_int());
+                this->id_ = param.as_int();
+                this->controller_ = std::make_shared<MotorController>(this->id_, this->interface_);
+            } else if (param.get_name() == Parameter::INTERFACE) {
+                this->interface_ = param.as_string();
+                this->controller_ = std::make_shared<MotorController>(this->id_, this->interface_);
             }
         }
 

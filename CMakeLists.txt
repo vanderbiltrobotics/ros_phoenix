@@ -12,17 +12,17 @@ else()
     message(FATAL_ERROR "Unsupported architecture for CTRE Phoenix: ${CMAKE_LIBRARY_ARCHITECTURE}")
 endif()
 
-set(CTRE_VERSION "5.19.4")
+set(CTRE_VERSION "5.21.2")
 
 # Macro for downloading CTRE Libraries
 macro(add_ctre_library LIB_NAME URL_NAME)
     SET(LIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/ctre/${CTRE_VERSION}/${URL_NAME}")
-    SET(LIB_DEST "${LIB_DIR}/linux/${CTRE_ARCH}/static/lib${LIB_NAME}.a")
+    SET(LIB_DEST "${LIB_DIR}/linux/${CTRE_ARCH}/shared/lib${LIB_NAME}.so")
     file(MAKE_DIRECTORY ${LIB_DIR})
     file(MAKE_DIRECTORY ${LIB_DIR}/ctre)
 
     # Download the library
-    set(FILE_NAME "${URL_NAME}-${CTRE_VERSION}-linux${CTRE_ARCH}static.zip")
+    set(FILE_NAME "${URL_NAME}-${CTRE_VERSION}-linux${CTRE_ARCH}.zip")
     set(FILE_URL "http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/${URL_NAME}/${CTRE_VERSION}/${FILE_NAME}")
     set(FILE_DEST "${LIB_DIR}/${FILE_NAME}")
     if(NOT EXISTS ${FILE_DEST})
@@ -50,11 +50,16 @@ macro(add_ctre_library LIB_NAME URL_NAME)
     )
 
     # Add library
-    add_library(${LIB_NAME} STATIC IMPORTED)
+    add_library(${LIB_NAME} SHARED IMPORTED)
     add_dependencies(${LIB_NAME} ${LIB_NAME}-unzip)
     set_target_properties(${LIB_NAME} PROPERTIES
         IMPORTED_LOCATION ${LIB_DEST}
         INTERFACE_INCLUDE_DIRECTORIES ${LIB_DIR}
+    )
+  
+    # Install library
+    install(FILES ${LIB_DEST}
+        DESTINATION lib
     )
 endmacro()
 
@@ -92,22 +97,14 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp
 )
 
-# List of Phoenix static libraries
+# List of Phoenix shared libraries
 set(PHOENIX_LIBRARIES CTRE_Phoenix
                       CTRE_PhoenixCCI
-                      CTRE_PhoenixDiagnostics
-                      CTRE_PhoenixPlatform_socketcan
-                      CTRE_PhoenixCanutils
-                      CTRE_PhoenixCore
 )
 
 # Download the CTRE libraries
-add_ctre_library(CTRE_Phoenix                   api-cpp)
-add_ctre_library(CTRE_PhoenixCCI                cci)
-add_ctre_library(CTRE_PhoenixDiagnostics        diagnostics)
-add_ctre_library(CTRE_PhoenixPlatform_socketcan platform-socketcan)
-add_ctre_library(CTRE_PhoenixCanutils           canutils)
-add_ctre_library(CTRE_PhoenixCore               core)
+add_ctre_library(CTRE_Phoenix    api-cpp)
+add_ctre_library(CTRE_PhoenixCCI cci)
 
 # Create shared library with components and CTRE libraries
 add_library(${PROJECT_NAME}_components SHARED

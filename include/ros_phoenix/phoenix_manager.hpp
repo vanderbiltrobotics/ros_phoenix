@@ -19,7 +19,6 @@ public:
 
     static bool instanceCreated();
 
-    static const std::string PARAMETER_INTERFACE;
     static const std::string PARAMETER_PERIOD_MS;
     static const std::string PARAMETER_WATCHDOG_MS;
 

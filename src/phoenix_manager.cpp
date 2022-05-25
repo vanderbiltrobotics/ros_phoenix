@@ -13,7 +13,6 @@ namespace ros_phoenix {
 std::mutex PhoenixManager::singleton_mutex_;
 std::shared_ptr<PhoenixManager> PhoenixManager::singleton_;
 
-const std::string PhoenixManager::PARAMETER_INTERFACE = "interface";
 const std::string PhoenixManager::PARAMETER_PERIOD_MS = "period_ms";
 const std::string PhoenixManager::PARAMETER_WATCHDOG_MS = "watchdog_ms";
 
@@ -34,12 +33,13 @@ PhoenixManager::PhoenixManager(
     std::weak_ptr<rclcpp::Executor> exec, const rclcpp::NodeOptions& options)
     : ComponentManager(exec, "PhoenixManager", options)
 {
-    this->declare_parameter<std::string>(PARAMETER_INTERFACE, "can0");
     this->declare_parameter<int>(PARAMETER_PERIOD_MS, 50);
     this->declare_parameter<int>(PARAMETER_WATCHDOG_MS, 200);
 
-    this->reconfigure({ this->get_parameter(PARAMETER_INTERFACE),
-        this->get_parameter(PARAMETER_PERIOD_MS), this->get_parameter(PARAMETER_WATCHDOG_MS) });
+    this->reconfigure({
+        this->get_parameter(PARAMETER_PERIOD_MS),
+        this->get_parameter(PARAMETER_WATCHDOG_MS)
+    });
 
     this->set_parameters_callback_ = this->add_on_set_parameters_callback(
         [this](const std::vector<rclcpp::Parameter>& params) { return this->reconfigure(params); });
@@ -56,9 +56,7 @@ rcl_interfaces::msg::SetParametersResult PhoenixManager::reconfigure(
     const std::vector<rclcpp::Parameter>& params)
 {
     for (const auto& param : params) {
-        if (param.get_name() == PARAMETER_INTERFACE) {
-            ctre::phoenix::platform::can::PlatformCAN::SetCANInterface(param.as_string().c_str());
-        } else if (param.get_name() == PARAMETER_PERIOD_MS) {
+        if (param.get_name() == PARAMETER_PERIOD_MS) {
             this->timer_ = this->create_wall_timer(std::chrono::milliseconds(param.as_int()),
                 std::bind(&PhoenixManager::feedEnable, this));
         } else if (param.get_name() == PARAMETER_WATCHDOG_MS) {

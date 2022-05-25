@@ -43,7 +43,6 @@ $ ros2 component load /PhoenixContainer ros_phoenix ros_phoenix::TalonSRX --node
 The `phoenix_container` allows motor controller nodes to be dynamically created at runtime. It is responsible for configuring the CAN interface used by all of the motor controllers created inside it. It also feeds the CTRE watchdog. This watchdog is responsible for enabling/disabling all motor controllers on the interface. This global watchdog is separate from the watchdog inside each component which disables an individual motor if it stops receiving updates.
 
 ### Parameters
-- `interface` ("can0"): The SocketCAN interface
 - `period_ms` (50): Period in milliseconds at which watchdog is feed
 - `watchdog_ms` (200): Period before motor controllers are disabled if watchdog dies
 
@@ -63,6 +62,7 @@ The `phoenix_container` allows motor controller nodes to be dynamically created 
 
 ### Parameters
 - `id` (0): Device CAN bus ID
+- `interface` ("can0"): The SocketCAN interface
 - `period_ms` (20): Period in milliseconds of status updates
 - `watchdog_ms` (100): Watchdog timer. Must be greater than period_ms!
 - `follow_id` (-1): If >= to zero, the ID of another device to follow

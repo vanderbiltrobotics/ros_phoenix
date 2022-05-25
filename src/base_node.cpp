@@ -4,6 +4,7 @@
 namespace ros_phoenix {
 
 const std::string BaseNode::Parameter::ID = "id";
+const std::string BaseNode::Parameter::INTERFACE = "interface";
 
 BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
     : rclcpp::Node(name, options)
@@ -16,6 +17,7 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
     }
 
     this->declare_parameter<int>(Parameter::ID, 0);
+    this->declare_parameter<std::string>(Parameter::INTERFACE, "can0");
     this->declare_parameter<int>("watchdog_ms", 100);
     this->template declare_parameter<int>("period_ms", 20);
     this->declare_parameter<int>("follow_id", -1);
@@ -34,6 +36,8 @@ BaseNode::BaseNode(const std::string& name, const rclcpp::NodeOptions& options)
     this->declare_parameter<double>("D", 0);
     this->declare_parameter<double>("F", 0);
 
+    this->id_ = this->get_parameter(Parameter::ID).as_int();
+    this->interface_ = this->get_parameter(Parameter::INTERFACE).as_string();
     this->watchdog_ms_ = this->get_parameter("watchdog_ms").as_int();
     this->period_ms_ = this->get_parameter("period_ms").as_int();
     this->follow_id_ = this->get_parameter("follow_id").as_int();

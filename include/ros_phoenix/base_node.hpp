@@ -15,6 +15,7 @@ class BaseNode : public Node {
 public:
     struct Parameter {
         static const std::string ID;
+        static const std::string INTERFACE;
     };
 
     RCLCPP_SHARED_PTR_DEFINITIONS(BaseNode)
@@ -34,6 +35,9 @@ protected:
     virtual void configure() = 0;
 
     virtual void onTimer();
+    
+    int id_;
+    std::string interface_;
 
     int follow_id_;
     double sensor_multiplier_ = 1.0;

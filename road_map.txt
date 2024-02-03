@@ -1,0 +1,17 @@
+ROS_TALON_BRIDGE Documents
+
+Author		Date		Description
+K Nguyen	2/1/2024
+
+				- git clone ros_phonix package from vanderbiltrobotics/ros_phoenxi
+					- https://github.com/vanderbiltrobotics/ros_phoenix
+				- install package ros-humble-hardware-interface
+				- error while building: no package name hardware_interface/base_interface.hpp
+				- installed package ros2-control
+				- hardware_interface/base_interface.hpp is not longer included in ros2 humble
+				- need to re-route the library
+				- Migration from Foxy to newer version (following ros2_control humble tutorial)
+					-remove BaseInterface as base class
+					-modified phoenix_bridge.hpp
+					-modified phoenix_sysyem.hpp
+					-added library rclcpp_lifecycle to package.xml
